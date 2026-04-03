@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gio Hang | XeDo Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container section page-shell">
+      <section class="panel page-hero-panel">
+        <div class="panel-head panel-head-wrap">
+          <div>
+            <p class="eyebrow">Mua hang</p>
+            <h1 id="cart-greeting">Gio hang cua ban</h1>
+          </div>
+          <div class="nav-actions">
+            <a class="ghost-btn link-btn" href="/">Trang chu</a>
+            <a class="ghost-btn link-btn" href="/user.html">Tai khoan</a>
+            <span class="ghost-btn link-btn">
+              Gio hang
+              <span id="cart-count" class="count-badge hidden">0</span>
+            </span>
+            <button id="logout-btn" class="ghost-btn">Dang xuat</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>San pham dang ban</h2>
+          </div>
+          <div id="cart-page-vehicles" class="stack-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Gio hang</h2>
+          </div>
+          <div class="order-tools">
+            <input id="promotion-code" type="text" placeholder="Nhap ma giam gia" />
+            <button id="apply-promotion-btn" class="ghost-btn">Ap ma</button>
+          </div>
+          <div id="cart-page-items" class="stack-list"></div>
+          <div id="cart-page-summary" class="mini-card"></div>
+          <div class="order-tools">
+            <input id="shipping-address" type="text" placeholder="Dia chi giao hang" />
+            <button id="checkout-btn" class="primary-btn">Thanh toan</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/cart.js"></script>
+  </body>
+</html>
