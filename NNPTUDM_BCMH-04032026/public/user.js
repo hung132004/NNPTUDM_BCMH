@@ -90,8 +90,19 @@ function renderOrders(orders) {
               <strong>Don ${order._id.slice(-6).toUpperCase()}</strong>
               <p><span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
               <p>${order.items
-                .map((item) => `<a href="/product.html?slug=${item.vehicle.slug}">${item.vehicle.name}</a> x${item.quantity}`)
+                .map((item) => {
+                  const resource = item.itemType === "accessory" ? item.accessory : item.vehicle;
+                  if (!resource) {
+                    return `San pham x${item.quantity}`;
+                  }
+                  if (item.itemType === "vehicle") {
+                    return `<a href="/product.html?slug=${resource.slug}">${resource.name}</a> x${item.quantity}`;
+                  }
+                  return `${resource.name} x${item.quantity}`;
+                })
                 .join(", ")}</p>
+              <p>Thanh toan: ${order.paymentMethod === "bank_transfer" ? "Chuyen khoan ngan hang" : "Thanh toan tai cua hang"}</p>
+              <p>Nhan hang: ${order.fulfillmentMethod === "delivery" ? "Ship tan noi" : "Nhan tai cua hang"}</p>
               <p>Tong thanh toan: ${formatCurrency(order.totalAmount)}</p>
               <p>Dia chi giao: ${order.shippingAddress}</p>
             </article>

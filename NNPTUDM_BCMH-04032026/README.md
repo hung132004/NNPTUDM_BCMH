@@ -29,6 +29,7 @@ Web ban xe do dung Node.js, Express, Mongoose va frontend tinh.
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/xe_do_shop
 JWT_SECRET=super_secret_key
+GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 ```
 
 4. Trong MongoDB Compass, connect bang:
@@ -49,6 +50,16 @@ npm run dev
 ```
 
 Mo `http://localhost:5000`.
+
+## Dang nhap Google
+
+1. Tao `OAuth Client ID` loai `Web application` trong Google Cloud Console.
+2. Them `Authorized JavaScript origins`:
+   - `http://localhost:5000`
+3. Gan `GOOGLE_CLIENT_ID` vao file `.env`.
+4. Mo trang chu, bam `Dang nhap` hoac `Dang ky`, sau do chon `Google`.
+
+Backend se xac thuc `idToken` cua Google, tim hoac tao user trong MongoDB, roi phat JWT noi bo cua he thong.
 
 ## Tai khoan demo
 

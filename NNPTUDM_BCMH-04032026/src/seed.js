@@ -4,6 +4,7 @@ const User = require("./models/User");
 const Brand = require("./models/Brand");
 const Category = require("./models/Category");
 const Vehicle = require("./models/Vehicle");
+const Accessory = require("./models/Accessory");
 const Cart = require("./models/Cart");
 const Order = require("./models/Order");
 const Review = require("./models/Review");
@@ -20,6 +21,7 @@ async function seed() {
     Brand.deleteMany(),
     Category.deleteMany(),
     Vehicle.deleteMany(),
+    Accessory.deleteMany(),
     Cart.deleteMany(),
     Order.deleteMany(),
     Review.deleteMany(),
@@ -87,13 +89,59 @@ async function seed() {
     }
   ]);
 
+  const accessories = await Accessory.insertMany([
+    {
+      name: "Mu Bao Hiem 3/4 Royal M139",
+      slug: "mu-bao-hiem-3-4-royal-m139",
+      category: "Bao ho",
+      compatibleVehicles: ["Winner X", "Exciter 155", "Xe so", "Xe con tay"],
+      stock: 20,
+      price: 950000,
+      salePrice: 850000,
+      thumbnail: "https://images.unsplash.com/photo-1558981403-c5f9891c4a9e?auto=format&fit=crop&w=900&q=80",
+      description: "Mu 3/4 gon nhe, phu hop di pho va touring ngan.",
+      featured: true
+    },
+    {
+      name: "Gang Tay Scoyco MC29",
+      slug: "gang-tay-scoyco-mc29",
+      category: "Bao ho",
+      compatibleVehicles: ["Winner X", "Exciter 155", "Naked Bike"],
+      stock: 30,
+      price: 650000,
+      salePrice: 590000,
+      thumbnail: "https://images.unsplash.com/photo-1517846693594-1567da72af75?auto=format&fit=crop&w=900&q=80",
+      description: "Gang tay full ngon, thoang khi va om tay khi chay duong dai.",
+      featured: true
+    },
+    {
+      name: "Gia Do Dien Thoai GUB Pro",
+      slug: "gia-do-dien-thoai-gub-pro",
+      category: "Tien ich",
+      compatibleVehicles: ["Moi loai xe"],
+      stock: 25,
+      price: 420000,
+      salePrice: 350000,
+      thumbnail: "https://images.unsplash.com/photo-1516728778615-2d590ea1858a?auto=format&fit=crop&w=900&q=80",
+      description: "Ke nhom CNC chac chan, de dan duong khi di tour.",
+      featured: true
+    }
+  ]);
+
   await Cart.create({
     user: user._id,
     items: [
       {
+        itemType: "vehicle",
         vehicle: vehicles[0]._id,
         quantity: 1,
         price: vehicles[0].salePrice || vehicles[0].price
+      },
+      {
+        itemType: "accessory",
+        accessory: accessories[0]._id,
+        quantity: 1,
+        price: accessories[0].salePrice || accessories[0].price
       }
     ]
   });
@@ -102,15 +150,28 @@ async function seed() {
     user: user._id,
     items: [
       {
+        itemType: "vehicle",
         vehicle: vehicles[1]._id,
         quantity: 1,
         price: vehicles[1].salePrice || vehicles[1].price
+      },
+      {
+        itemType: "accessory",
+        accessory: accessories[1]._id,
+        quantity: 2,
+        price: accessories[1].salePrice || accessories[1].price
       }
     ],
-    totalAmount: vehicles[1].salePrice || vehicles[1].price,
+    subtotalAmount: (vehicles[1].salePrice || vehicles[1].price) + (accessories[1].salePrice || accessories[1].price) * 2,
+    discountAmount: 0,
+    shippingFee: 40000,
+    totalAmount: (vehicles[1].salePrice || vehicles[1].price) + (accessories[1].salePrice || accessories[1].price) * 2 + 40000,
     status: "confirmed",
-    paymentMethod: "COD",
-    shippingAddress: "Ha Noi"
+    paymentMethod: "bank_transfer",
+    fulfillmentMethod: "delivery",
+    shippingAddress: "Ha Noi",
+    distanceKm: 2,
+    storeAddress: "1 DN11, Khu Pho 4, Dong Hung Thuan, Ho Chi Minh"
   });
 
   await Review.create({

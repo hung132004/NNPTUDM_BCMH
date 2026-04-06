@@ -11,6 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <header class="hero">
@@ -80,6 +81,14 @@
 
       <section class="section container section-surface">
         <div class="section-heading">
+          <p class="eyebrow">Phu kien</p>
+          <h2>Phu kien dang san co</h2>
+        </div>
+        <div id="accessory-list" class="card-grid"></div>
+      </section>
+
+      <section class="section container section-surface">
+        <div class="section-heading">
           <p class="eyebrow">Khuyen mai</p>
           <h2>Ma giam gia dang hoat dong</h2>
         </div>
@@ -101,6 +110,10 @@
           <input name="password" type="password" placeholder="Mat khau" required />
           <button class="primary-btn" type="submit">Dang nhap</button>
         </form>
+        <div class="oauth-box">
+          <p class="oauth-label">Hoac tiep tuc voi Google</p>
+          <div id="google-login-button"></div>
+        </div>
 
         <form id="register-form" class="auth-form hidden">
           <input name="fullName" type="text" placeholder="Ho ten" required />
@@ -111,6 +124,10 @@
           <input name="address" type="text" placeholder="Dia chi" />
           <button class="primary-btn" type="submit">Tao tai khoan</button>
         </form>
+        <div id="google-register-box" class="oauth-box hidden">
+          <p class="oauth-label">Hoac dang ky nhanh voi Google</p>
+          <div id="google-register-button"></div>
+        </div>
 
         <button id="close-modal" class="close-btn" type="button">Dong</button>
       </div>

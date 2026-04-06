@@ -25,7 +25,11 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/uploads", express.static(path.join(__dirname, "..", "public", "uploads")));
 
 app.get("/api/health", (_req, res) => {
-  res.json({ message: "API is running" });
+  res.json({ message: "API is running", googleConfigured: Boolean(process.env.GOOGLE_CLIENT_ID) });
+});
+
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 app.use("/api/auth", authRoutes);

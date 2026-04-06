@@ -4,16 +4,39 @@ const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Review = require("../models/Review");
 const Vehicle = require("../models/Vehicle");
+const Accessory = require("../models/Accessory");
 const Promotion = require("../models/Promotion");
 
 const router = express.Router();
 
-function buildCartSummary(cart, promotion = null) {
+const STORE_ADDRESS = "1 DN11, Khu Pho 4, Dong Hung Thuan, Ho Chi Minh";
+const STORE_COORDS = { lat: 10.85124, lon: 106.62669 };
+const SHIPPING_RATE_PER_KM = 20000;
+const USER_AGENT = "XeDoStudio/1.0 shipping-estimator";
+
+async function populateCart(cartId) {
+  return Cart.findById(cartId)
+    .populate("items.vehicle")
+    .populate("items.accessory");
+}
+
+function getCartItemResource(item) {
+  return item.itemType === "accessory" ? item.accessory : item.vehicle;
+}
+
+function getCartItemId(item) {
+  const resource = getCartItemResource(item);
+  return resource?._id?.toString() || "";
+}
+
+function buildCartSummary(cart, promotion = null, fulfillmentMethod = "pickup", distanceKm = 0) {
   const items = cart?.items || [];
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountPercent = promotion?.discountPercent || 0;
   const discountAmount = Math.round((subtotal * discountPercent) / 100);
-  const total = Math.max(subtotal - discountAmount, 0);
+  const normalizedDistanceKm = Math.max(Number(distanceKm || 0), 0);
+  const shippingFee = fulfillmentMethod === "delivery" ? normalizedDistanceKm * SHIPPING_RATE_PER_KM : 0;
+  const total = Math.max(subtotal - discountAmount, 0) + shippingFee;
 
   return {
     items,
@@ -26,7 +49,133 @@ function buildCartSummary(cart, promotion = null) {
         }
       : null,
     discountAmount,
+    shippingFee,
+    fulfillmentMethod,
+    distanceKm: normalizedDistanceKm,
+    shippingRatePerKm: SHIPPING_RATE_PER_KM,
+    storeAddress: STORE_ADDRESS,
     total
+  };
+}
+
+async function geocodeAddress(address) {
+  const candidates = [
+    address,
+    address.replace("Khu Pho", "Khu phố"),
+    address.replace("DN11", "ĐN11"),
+    `${address}, Ho Chi Minh City, Vietnam`,
+    `${address}, Ho Chi Minh, Vietnam`,
+    `${address}, Vietnam`
+  ];
+
+  for (const candidate of candidates) {
+    const params = new URLSearchParams({
+      q: candidate,
+      format: "jsonv2",
+      limit: "1"
+    });
+
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+      headers: {
+        "User-Agent": USER_AGENT,
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Khong the tim toa do cho dia chi nay");
+    }
+
+    const results = await response.json();
+    if (Array.isArray(results) && results.length) {
+      return {
+        lat: Number(results[0].lat),
+        lon: Number(results[0].lon),
+        displayName: results[0].display_name
+      };
+    }
+  }
+
+  throw new Error("Khong tim thay dia chi giao hang");
+}
+
+async function reverseGeocode(lat, lon) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    format: "jsonv2"
+  });
+
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    return `Vi tri da chon (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+  }
+
+  const payload = await response.json();
+  return payload?.display_name || `Vi tri da chon (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+}
+
+function haversineDistanceKm(origin, destination) {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(destination.lat - origin.lat);
+  const dLon = toRadians(destination.lon - origin.lon);
+  const lat1 = toRadians(origin.lat);
+  const lat2 = toRadians(destination.lat);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
+async function calculateRouteDistanceKm(origin, destination) {
+  const routeUrl = `https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=false`;
+  const response = await fetch(routeUrl, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      Accept: "application/json"
+    }
+  });
+
+  if (response.ok) {
+    const payload = await response.json();
+    const distanceMeters = payload?.routes?.[0]?.distance;
+
+    if (distanceMeters) {
+      return Math.round((distanceMeters / 1000) * 10) / 10;
+    }
+  }
+
+  // Fallback to an approximate road distance when routing service is unavailable.
+  const straightLineKm = haversineDistanceKm(origin, destination);
+  return Math.max(Math.round(straightLineKm * 1.2 * 10) / 10, 0.5);
+}
+
+async function estimateDeliveryDistanceKm(destinationAddress) {
+  const destination = await geocodeAddress(destinationAddress);
+  const origin = STORE_COORDS;
+
+  return {
+    distanceKm: await calculateRouteDistanceKm(origin, destination),
+    normalizedAddress: destination.displayName
+  };
+}
+
+async function estimateDeliveryDistanceFromCoords(lat, lon) {
+  const origin = STORE_COORDS;
+  const destination = { lat, lon };
+
+  return {
+    distanceKm: await calculateRouteDistanceKm(origin, destination),
+    normalizedAddress: await reverseGeocode(lat, lon)
   };
 }
 
@@ -35,8 +184,8 @@ router.use(protect, authorize("user", "admin"));
 router.get("/dashboard", async (req, res, next) => {
   try {
     const [cart, orders, reviews] = await Promise.all([
-      Cart.findOne({ user: req.user._id }).populate("items.vehicle"),
-      Order.find({ user: req.user._id }).populate("items.vehicle").sort({ createdAt: -1 }),
+      Cart.findOne({ user: req.user._id }).populate("items.vehicle").populate("items.accessory"),
+      Order.find({ user: req.user._id }).populate("items.vehicle items.accessory").sort({ createdAt: -1 }),
       Review.find({ user: req.user._id }).populate("vehicle").sort({ createdAt: -1 })
     ]);
 
@@ -45,7 +194,9 @@ router.get("/dashboard", async (req, res, next) => {
       cart,
       cartSummary: buildCartSummary(cart),
       orders,
-      reviews
+      reviews,
+      storeAddress: STORE_ADDRESS,
+      shippingRatePerKm: SHIPPING_RATE_PER_KM
     });
   } catch (error) {
     next(error);
@@ -55,7 +206,12 @@ router.get("/dashboard", async (req, res, next) => {
 router.get("/cart", async (req, res, next) => {
   try {
     const promotionCode = req.query.promotionCode?.trim().toUpperCase();
-    const cart = await Cart.findOne({ user: req.user._id }).populate("items.vehicle");
+    const fulfillmentMethod = req.query.fulfillmentMethod === "delivery" ? "delivery" : "pickup";
+    const shippingAddress = String(req.query.shippingAddress || "").trim();
+    let distanceKm = Number(req.query.distanceKm || 0);
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.vehicle")
+      .populate("items.accessory");
     let promotion = null;
 
     if (promotionCode) {
@@ -70,9 +226,62 @@ router.get("/cart", async (req, res, next) => {
       }
     }
 
+    if (fulfillmentMethod === "delivery" && shippingAddress) {
+      const estimate = await estimateDeliveryDistanceKm(shippingAddress);
+      distanceKm = estimate.distanceKm;
+    }
+
     res.json({
       cart,
-      summary: buildCartSummary(cart, promotion)
+      summary: buildCartSummary(cart, promotion, fulfillmentMethod, distanceKm),
+      storeAddress: STORE_ADDRESS,
+      shippingRatePerKm: SHIPPING_RATE_PER_KM
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/shipping/estimate", async (req, res, next) => {
+  try {
+    const shippingAddress = String(req.body.shippingAddress || "").trim();
+
+    if (!shippingAddress) {
+      return res.status(400).json({ message: "Vui long nhap dia chi giao hang" });
+    }
+
+    const estimate = await estimateDeliveryDistanceKm(shippingAddress);
+
+    res.json({
+      shippingAddress: estimate.normalizedAddress,
+      distanceKm: estimate.distanceKm,
+      shippingFee: estimate.distanceKm * SHIPPING_RATE_PER_KM,
+      shippingRatePerKm: SHIPPING_RATE_PER_KM,
+      storeAddress: STORE_ADDRESS
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/shipping/estimate-point", async (req, res, next) => {
+  try {
+    const lat = Number(req.body.lat);
+    const lon = Number(req.body.lon);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      return res.status(400).json({ message: "Toa do giao hang khong hop le" });
+    }
+
+    const estimate = await estimateDeliveryDistanceFromCoords(lat, lon);
+
+    res.json({
+      shippingAddress: estimate.normalizedAddress,
+      distanceKm: estimate.distanceKm,
+      shippingFee: estimate.distanceKm * SHIPPING_RATE_PER_KM,
+      shippingRatePerKm: SHIPPING_RATE_PER_KM,
+      storeAddress: STORE_ADDRESS,
+      point: { lat, lon }
     });
   } catch (error) {
     next(error);
@@ -81,11 +290,13 @@ router.get("/cart", async (req, res, next) => {
 
 router.post("/cart", async (req, res, next) => {
   try {
-    const { vehicleId, quantity } = req.body;
-    const vehicle = await Vehicle.findById(vehicleId);
+    const { vehicleId, accessoryId, quantity } = req.body;
+    const itemType = accessoryId ? "accessory" : "vehicle";
+    const resourceId = String(accessoryId || vehicleId || "").trim();
+    const resource = accessoryId ? await Accessory.findById(accessoryId) : await Vehicle.findById(vehicleId);
 
-    if (!vehicle) {
-      return res.status(404).json({ message: "Xe khong ton tai" });
+    if (!resource) {
+      return res.status(404).json({ message: itemType === "accessory" ? "Phu kien khong ton tai" : "Xe khong ton tai" });
     }
 
     let cart = await Cart.findOne({ user: req.user._id });
@@ -93,19 +304,26 @@ router.post("/cart", async (req, res, next) => {
       cart = await Cart.create({ user: req.user._id, items: [] });
     }
 
-    const itemIndex = cart.items.findIndex((item) => item.vehicle.toString() === vehicleId);
+    const itemIndex = cart.items.findIndex((item) => {
+      const currentId =
+        item.itemType === "accessory" ? item.accessory?.toString() : item.vehicle?.toString();
+      return item.itemType === itemType && currentId === resourceId;
+    });
+
     if (itemIndex >= 0) {
       cart.items[itemIndex].quantity += Number(quantity || 1);
     } else {
       cart.items.push({
-        vehicle: vehicle._id,
+        itemType,
+        vehicle: itemType === "vehicle" ? resource._id : null,
+        accessory: itemType === "accessory" ? resource._id : null,
         quantity: Number(quantity || 1),
-        price: vehicle.salePrice || vehicle.price
+        price: resource.salePrice || resource.price
       });
     }
 
     await cart.save();
-    const populatedCart = await Cart.findById(cart._id).populate("items.vehicle");
+    const populatedCart = await populateCart(cart._id);
     res.status(201).json({
       message: "Da them vao gio hang",
       cart: populatedCart,
@@ -116,28 +334,30 @@ router.post("/cart", async (req, res, next) => {
   }
 });
 
-router.patch("/cart/:vehicleId", async (req, res, next) => {
+router.patch("/cart/:itemId", async (req, res, next) => {
   try {
     const quantity = Number(req.body.quantity);
-    const cart = await Cart.findOne({ user: req.user._id });
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.vehicle")
+      .populate("items.accessory");
 
     if (!cart) {
       return res.status(404).json({ message: "Gio hang chua ton tai" });
     }
 
-    const item = cart.items.find((entry) => entry.vehicle.toString() === req.params.vehicleId);
+    const item = cart.items.find((entry) => getCartItemId(entry) === req.params.itemId);
     if (!item) {
       return res.status(404).json({ message: "Khong tim thay san pham trong gio" });
     }
 
     if (quantity <= 0) {
-      cart.items = cart.items.filter((entry) => entry.vehicle.toString() !== req.params.vehicleId);
+      cart.items = cart.items.filter((entry) => getCartItemId(entry) !== req.params.itemId);
     } else {
       item.quantity = quantity;
     }
 
     await cart.save();
-    const populatedCart = await Cart.findById(cart._id).populate("items.vehicle");
+    const populatedCart = await populateCart(cart._id);
     res.json({
       message: "Cap nhat gio hang thanh cong",
       cart: populatedCart,
@@ -148,18 +368,20 @@ router.patch("/cart/:vehicleId", async (req, res, next) => {
   }
 });
 
-router.delete("/cart/:vehicleId", async (req, res, next) => {
+router.delete("/cart/:itemId", async (req, res, next) => {
   try {
-    const cart = await Cart.findOne({ user: req.user._id });
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.vehicle")
+      .populate("items.accessory");
 
     if (!cart) {
       return res.status(404).json({ message: "Gio hang chua ton tai" });
     }
 
-    cart.items = cart.items.filter((entry) => entry.vehicle.toString() !== req.params.vehicleId);
+    cart.items = cart.items.filter((entry) => getCartItemId(entry) !== req.params.itemId);
     await cart.save();
 
-    const populatedCart = await Cart.findById(cart._id).populate("items.vehicle");
+    const populatedCart = await populateCart(cart._id);
     res.json({
       message: "Da xoa san pham khoi gio",
       cart: populatedCart,
@@ -172,11 +394,25 @@ router.delete("/cart/:vehicleId", async (req, res, next) => {
 
 router.post("/orders", async (req, res, next) => {
   try {
-    const { shippingAddress, paymentMethod, promotionCode } = req.body;
-    const cart = await Cart.findOne({ user: req.user._id }).populate("items.vehicle");
+    const { shippingAddress, paymentMethod, promotionCode, fulfillmentMethod, distanceKm } = req.body;
+    const normalizedFulfillmentMethod = fulfillmentMethod === "delivery" ? "delivery" : "pickup";
+    const normalizedPaymentMethod = paymentMethod === "bank_transfer" ? "bank_transfer" : "store_payment";
+    let normalizedDistanceKm = Math.max(Number(distanceKm || 0), 0);
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.vehicle")
+      .populate("items.accessory");
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Gio hang dang trong" });
+    }
+
+    if (normalizedFulfillmentMethod === "delivery" && !String(shippingAddress || "").trim()) {
+      return res.status(400).json({ message: "Vui long nhap dia chi giao hang" });
+    }
+
+    if (normalizedFulfillmentMethod === "delivery") {
+      const estimate = await estimateDeliveryDistanceKm(String(shippingAddress || "").trim());
+      normalizedDistanceKm = estimate.distanceKm;
     }
 
     let promotion = null;
@@ -192,24 +428,34 @@ router.post("/orders", async (req, res, next) => {
       }
     }
 
-    const summary = buildCartSummary(cart, promotion);
+    const summary = buildCartSummary(cart, promotion, normalizedFulfillmentMethod, normalizedDistanceKm);
+    const resolvedShippingAddress =
+      normalizedFulfillmentMethod === "pickup" ? STORE_ADDRESS : String(shippingAddress || "").trim();
 
     const order = await Order.create({
       user: req.user._id,
       items: cart.items.map((item) => ({
-        vehicle: item.vehicle._id,
+        itemType: item.itemType,
+        vehicle: item.vehicle?._id || null,
+        accessory: item.accessory?._id || null,
         quantity: item.quantity,
         price: item.price
       })),
+      subtotalAmount: summary.subtotal,
+      discountAmount: summary.discountAmount,
+      shippingFee: summary.shippingFee,
       totalAmount: summary.total,
-      paymentMethod: paymentMethod || "COD",
-      shippingAddress
+      paymentMethod: normalizedPaymentMethod,
+      fulfillmentMethod: normalizedFulfillmentMethod,
+      shippingAddress: resolvedShippingAddress,
+      distanceKm: normalizedFulfillmentMethod === "delivery" ? normalizedDistanceKm : 0,
+      storeAddress: STORE_ADDRESS
     });
 
     cart.items = [];
     await cart.save();
 
-    const populatedOrder = await Order.findById(order._id).populate("items.vehicle");
+    const populatedOrder = await Order.findById(order._id).populate("items.vehicle items.accessory");
     res.status(201).json({
       message: "Dat hang thanh cong",
       order: populatedOrder,

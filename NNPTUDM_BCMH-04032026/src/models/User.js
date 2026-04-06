@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema(
     username: { type: String, required: true, unique: true, lowercase: true, trim: true },
     email: { type: String, default: "", lowercase: true, trim: true, sparse: true },
     password: { type: String, required: true, minlength: 6 },
+    googleId: { type: String, default: "", index: true },
+    authProvider: { type: String, enum: ["local", "google"], default: "local" },
     phone: { type: String, default: "" },
     address: { type: String, default: "" },
     avatar: { type: String, default: "" },

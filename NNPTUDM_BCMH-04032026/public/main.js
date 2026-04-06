@@ -7,6 +7,7 @@ const elements = {
   brandList: document.getElementById("brand-list"),
   categoryList: document.getElementById("category-list"),
   vehicleList: document.getElementById("vehicle-list"),
+  accessoryList: document.getElementById("accessory-list"),
   promotionList: document.getElementById("promotion-list"),
   searchForm: document.getElementById("search-form"),
   searchInput: document.getElementById("search-input"),
@@ -14,6 +15,9 @@ const elements = {
   authModal: document.getElementById("auth-modal"),
   loginForm: document.getElementById("login-form"),
   registerForm: document.getElementById("register-form"),
+  googleLoginButton: document.getElementById("google-login-button"),
+  googleRegisterBox: document.getElementById("google-register-box"),
+  googleRegisterButton: document.getElementById("google-register-button"),
   authError: document.getElementById("auth-error"),
   guestActions: document.getElementById("guest-actions"),
   authActions: document.getElementById("auth-actions"),
@@ -128,12 +132,38 @@ function renderPromotions(promotions) {
     .join("");
 }
 
+function renderAccessories(accessories) {
+  elements.accessoryList.innerHTML = accessories
+    .map(
+      (accessory) => `
+        <article class="vehicle-card">
+          <img src="${accessory.thumbnail}" alt="${accessory.name}" />
+          <div class="vehicle-body">
+            <div class="vehicle-meta">
+              <span>${accessory.category}</span>
+              <span>${(accessory.compatibleVehicles || []).slice(0, 1).join("") || "Moi loai xe"}</span>
+            </div>
+            <h3>${accessory.name}</h3>
+            <p>${accessory.description}</p>
+            <div class="price-row">
+              <strong>${formatCurrency(accessory.salePrice || accessory.price)}</strong>
+              <span class="old-price">${formatCurrency(accessory.price)}</span>
+            </div>
+            <button class="primary-btn" onclick="addAccessoryToCart('${accessory._id}')">Them phu kien</button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+}
+
 async function loadHome() {
   try {
     const data = await api("/api/catalog/home");
     renderPills(elements.brandList, data.brands);
     renderPills(elements.categoryList, data.categories, "secondary");
     renderVehicles(data.featuredVehicles);
+    renderAccessories(data.featuredAccessories || []);
     renderPromotions(data.promotions);
   } catch (error) {
     showToast(error.message);
@@ -183,6 +213,8 @@ function toggleAuthTab(tab) {
   document.getElementById("tab-register").classList.toggle("active", tab === "register");
   elements.loginForm.classList.toggle("hidden", tab !== "login");
   elements.registerForm.classList.toggle("hidden", tab !== "register");
+  elements.googleLoginButton.parentElement.classList.toggle("hidden", tab !== "login");
+  elements.googleRegisterBox.classList.toggle("hidden", tab !== "register");
 }
 
 function openModal(tab = "login") {
@@ -277,6 +309,58 @@ async function handleRegister(event) {
   }
 }
 
+async function handleGoogleCredentialResponse(response) {
+  clearAuthError();
+
+  try {
+    const data = await api("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ idToken: response.credential })
+    });
+    saveAuth(data);
+    closeModal();
+    showToast(`Xin chao ${data.user.fullName}`);
+  } catch (error) {
+    showAuthError(error.message);
+    showToast(error.message);
+  }
+}
+
+async function initializeGoogleAuth() {
+  if (!window.google || !elements.googleLoginButton || !elements.googleRegisterButton) {
+    return;
+  }
+
+  let clientId = "";
+
+  try {
+    const config = await api("/api/auth/google/config");
+    clientId = config.clientId;
+  } catch (_error) {
+    return;
+  }
+
+  if (!clientId) {
+    return;
+  }
+
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: handleGoogleCredentialResponse
+  });
+
+  const buttonOptions = {
+    theme: "outline",
+    size: "large",
+    shape: "pill",
+    text: "continue_with",
+    width: 320
+  };
+
+  window.google.accounts.id.renderButton(elements.googleLoginButton, buttonOptions);
+  window.google.accounts.id.renderButton(elements.googleRegisterButton, buttonOptions);
+}
+
 window.addToCart = async function addToCart(vehicleId) {
   if (!state.token) {
     openModal("login");
@@ -290,6 +374,24 @@ window.addToCart = async function addToCart(vehicleId) {
     });
     await refreshCartCount();
     showToast("Da them vao gio hang");
+  } catch (error) {
+    showToast(error.message);
+  }
+};
+
+window.addAccessoryToCart = async function addAccessoryToCart(accessoryId) {
+  if (!state.token) {
+    openModal("login");
+    return;
+  }
+
+  try {
+    await api("/api/user/cart", {
+      method: "POST",
+      body: JSON.stringify({ accessoryId, quantity: 1 })
+    });
+    await refreshCartCount();
+    showToast("Da them phu kien vao gio");
   } catch (error) {
     showToast(error.message);
   }
@@ -312,3 +414,5 @@ elements.registerForm.addEventListener("submit", handleRegister);
 renderNav();
 refreshCartCount();
 loadHome();
+
+window.addEventListener("load", initializeGoogleAuth);

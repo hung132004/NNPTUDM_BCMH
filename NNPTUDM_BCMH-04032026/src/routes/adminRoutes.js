@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Brand = require("../models/Brand");
 const Category = require("../models/Category");
 const Vehicle = require("../models/Vehicle");
+const Accessory = require("../models/Accessory");
 const Order = require("../models/Order");
 const Review = require("../models/Review");
 const Promotion = require("../models/Promotion");
@@ -35,10 +36,11 @@ router.use(protect, authorize("admin"));
 
 router.get("/dashboard", async (_req, res, next) => {
   try {
-    const [users, vehicles, orders, promotions, reviews, brands, categories] = await Promise.all([
+    const [users, vehicles, accessories, orders, promotions, reviews, brands, categories] = await Promise.all([
       User.find().select("-password").sort({ createdAt: -1 }),
       Vehicle.find().populate("brand category").sort({ createdAt: -1 }),
-      Order.find().populate("user", "fullName email").sort({ createdAt: -1 }),
+      Accessory.find().sort({ createdAt: -1 }),
+      Order.find().populate("user", "fullName email").populate("items.vehicle items.accessory").sort({ createdAt: -1 }),
       Promotion.find().sort({ createdAt: -1 }),
       Review.find().populate("user", "fullName email").populate("vehicle", "name slug").sort({ createdAt: -1 }),
       Brand.find().sort({ name: 1 }),
@@ -49,12 +51,14 @@ router.get("/dashboard", async (_req, res, next) => {
       stats: {
         totalUsers: users.length,
         totalVehicles: vehicles.length,
+        totalAccessories: accessories.length,
         totalOrders: orders.length,
         totalReviews: reviews.length,
         revenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
       },
       users,
       vehicles,
+      accessories,
       orders,
       promotions,
       reviews,

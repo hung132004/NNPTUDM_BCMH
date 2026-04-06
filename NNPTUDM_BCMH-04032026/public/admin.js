@@ -65,6 +65,7 @@ function renderStats(data) {
   elements.stats.innerHTML = `
     <div class="mini-card"><strong>Khach hang</strong><p>${data.stats.totalUsers}</p></div>
     <div class="mini-card"><strong>San pham</strong><p>${data.stats.totalVehicles}</p></div>
+    <div class="mini-card"><strong>Phu kien</strong><p>${data.stats.totalAccessories || 0}</p></div>
     <div class="mini-card"><strong>Don hang</strong><p>${data.stats.totalOrders}</p></div>
     <div class="mini-card"><strong>Review</strong><p>${data.stats.totalReviews}</p></div>
     <div class="mini-card"><strong>Doanh thu</strong><p>${formatCurrency(data.stats.revenue)}</p></div>
@@ -160,6 +161,14 @@ function renderOrders(orders) {
             <article class="mini-card">
               <strong>Don ${order._id.slice(-6).toUpperCase()} / ${order.user?.fullName || "Khach hang"}</strong>
               <p><span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
+              <p>${order.items
+                .map((item) => {
+                  const resource = item.itemType === "accessory" ? item.accessory : item.vehicle;
+                  return `${resource?.name || "San pham"} x${item.quantity}`;
+                })
+                .join(", ")}</p>
+              <p>${order.paymentMethod === "bank_transfer" ? "Chuyen khoan ngan hang" : "Thanh toan tai cua hang"}</p>
+              <p>${order.fulfillmentMethod === "delivery" ? `Ship tan noi / ${order.distanceKm || 0} km` : "Nhan tai cua hang"}</p>
               <p>${formatCurrency(order.totalAmount)}</p>
               <p>${order.shippingAddress}</p>
               <div class="inline-actions">
