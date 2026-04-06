@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tai Khoan | XeDo Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container section page-shell">
+      <section class="panel page-hero-panel">
+        <div class="panel-head panel-head-wrap">
+          <div>
+            <p class="eyebrow">Tai khoan</p>
+            <h1 id="user-greeting">Xin chao</h1>
+          </div>
+          <div class="nav-actions">
+            <a class="ghost-btn link-btn" href="/">Trang chu</a>
+            <a class="ghost-btn link-btn" href="/cart.html">
+              Gio hang
+              <span id="cart-count" class="count-badge hidden">0</span>
+            </a>
+            <button id="logout-btn" class="ghost-btn">Dang xuat</button>
+          </div>
+        </div>
+        <div id="user-profile" class="dashboard-content"></div>
+      </section>
+
+      <section class="account-tabs">
+        <button class="tab-btn active" data-tab-target="orders">Don hang da mua</button>
+        <button class="tab-btn" data-tab-target="reviews">Danh gia da gui</button>
+      </section>
+
+      <section id="orders-panel" class="panel tab-panel">
+        <div class="panel-head">
+          <h2>Don hang da mua</h2>
+        </div>
+        <div id="user-orders" class="stack-list"></div>
+      </section>
+
+      <section id="reviews-panel" class="panel tab-panel hidden">
+        <div class="panel-head">
+          <h2>Danh gia da gui</h2>
+        </div>
+        <form id="review-form" class="auth-form compact-form">
+          <select name="vehicleId" id="review-vehicle" required></select>
+          <input name="rating" type="number" min="1" max="5" placeholder="So sao 1-5" required />
+          <input name="comment" type="text" placeholder="Noi dung danh gia" required />
+          <button type="submit" class="primary-btn">Gui danh gia</button>
+        </form>
+        <div id="user-reviews" class="stack-list"></div>
+      </section>
+    </main>
+
+    <script src="/user.js"></script>
+  </body>
+</html>
