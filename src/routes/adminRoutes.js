@@ -256,6 +256,13 @@ router.patch("/warranties/:id/status", async (req, res, next) => {
     }
     await warranty.save();
 
+    await createNotification(warranty.user, {
+      type: "system",
+      title: "Bao hanh duoc cap nhat",
+      message: `Yeu cau bao hanh cua ban da duoc chuyen sang trang thai ${warranty.status}.`,
+      link: "/user.html"
+    });
+
     res.json({ message: "Cap nhat trang thai bao hanh thanh cong", warranty });
   } catch (error) {
     next(error);

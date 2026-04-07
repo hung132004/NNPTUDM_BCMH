@@ -1,4 +1,5 @@
 const Notification = require("../models/Notification");
+const User = require("../models/User");
 const { getIo } = require("./socket");
 
 async function createNotification(userId, payload) {
@@ -21,4 +22,14 @@ async function createNotification(userId, payload) {
   return notification;
 }
 
-module.exports = { createNotification };
+async function createNotificationForAdmins(payload) {
+  const admins = await User.find({ role: "admin" }).select("_id");
+
+  if (!admins.length) {
+    return [];
+  }
+
+  return Promise.all(admins.map((admin) => createNotification(admin._id, payload)));
+}
+
+module.exports = { createNotification, createNotificationForAdmins };

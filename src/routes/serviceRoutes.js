@@ -2,7 +2,7 @@ const express = require("express");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const Service = require("../models/Service");
 const Vehicle = require("../models/Vehicle");
-const { createNotification } = require("../utils/notificationHelper");
+const { createNotification, createNotificationForAdmins } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -59,6 +59,15 @@ router.post("/", protect, authorize("user", "admin"), async (req, res, next) => 
     const populatedService = await Service.findById(service._id)
       .populate("vehicle", "name slug thumbnail")
       .populate("user", "fullName");
+
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "system",
+        title: "Lich dich vu moi",
+        message: `${req.user.fullName} vua dat lich ${service.serviceType}.`,
+        link: "/admin.html"
+      });
+    }
 
     res.status(201).json({
       message: "Da them lich bao duong",

@@ -9,7 +9,7 @@ const Promotion = require("../models/Promotion");
 const Invoice = require("../models/Invoice");
 const Warranty = require("../models/Warranty");
 const Service = require("../models/Service");
-const { createNotification } = require("../utils/notificationHelper");
+const { createNotification, createNotificationForAdmins } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -62,8 +62,6 @@ function buildCartSummary(cart, promotion = null, fulfillmentMethod = "pickup", 
   };
 }
 
-<<<<<<< HEAD
-=======
 function createInvoiceNumber(orderId) {
   const suffix = String(orderId).slice(-6).toUpperCase();
   return `INV-${new Date().getFullYear()}-${suffix}-${Date.now().toString().slice(-5)}`;
@@ -88,7 +86,6 @@ function buildInvoiceItems(items) {
   });
 }
 
->>>>>>> 07042026
 async function geocodeAddress(address) {
   const candidates = [
     address,
@@ -463,11 +460,8 @@ router.post("/orders", async (req, res, next) => {
     const resolvedShippingAddress =
       normalizedFulfillmentMethod === "pickup" ? STORE_ADDRESS : String(shippingAddress || "").trim();
 
-<<<<<<< HEAD
-=======
     const invoiceItems = buildInvoiceItems(cart.items);
 
->>>>>>> 07042026
     const order = await Order.create({
       user: req.user._id,
       items: cart.items.map((item) => ({
@@ -488,8 +482,6 @@ router.post("/orders", async (req, res, next) => {
       storeAddress: STORE_ADDRESS
     });
 
-<<<<<<< HEAD
-=======
     const invoice = await Invoice.create({
       order: order._id,
       user: req.user._id,
@@ -514,23 +506,26 @@ router.post("/orders", async (req, res, next) => {
       link: `/orders/${order._id}`
     });
 
->>>>>>> 07042026
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "system",
+        title: "Don hang moi",
+        message: `${req.user.fullName} vua tao don hang ${order._id}.`,
+        link: "/admin.html"
+      });
+    }
+
     cart.items = [];
     await cart.save();
 
     const populatedOrder = await Order.findById(order._id).populate("items.vehicle items.accessory");
-<<<<<<< HEAD
-    res.status(201).json({
-      message: "Dat hang thanh cong",
-      order: populatedOrder,
-=======
-    const populatedInvoice = await Invoice.findById(invoice._id).populate("order").populate("items.vehicle items.accessory");
 
+    const populatedInvoice = await Invoice.findById(invoice._id).populate("order").populate("items.vehicle items.accessory");
+    
     res.status(201).json({
       message: "Dat hang thanh cong",
       order: populatedOrder,
       invoice: populatedInvoice,
->>>>>>> 07042026
       summary
     });
   } catch (error) {
@@ -538,8 +533,6 @@ router.post("/orders", async (req, res, next) => {
   }
 });
 
-<<<<<<< HEAD
-=======
 router.get("/invoices", async (req, res, next) => {
   try {
     const invoices = await Invoice.find({ user: req.user._id }).populate("order").sort({ createdAt: -1 });
@@ -645,6 +638,15 @@ router.post("/warranties", async (req, res, next) => {
     const warranty = await Warranty.create(warrantyData);
     const populatedWarranty = await Warranty.findById(warranty._id).populate("order service vehicle accessory");
 
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "system",
+        title: "Yeu cau bao hanh moi",
+        message: `${req.user.fullName} vua gui yeu cau bao hanh.`,
+        link: "/admin.html"
+      });
+    }
+
     res.status(201).json({ message: "Da tao yeu cau bao hanh", warranty: populatedWarranty });
   } catch (error) {
     next(error);
@@ -678,7 +680,6 @@ router.get("/warranties/:id", async (req, res, next) => {
   }
 });
 
->>>>>>> 07042026
 router.post("/reviews", async (req, res, next) => {
   try {
     const { vehicleId, rating, comment } = req.body;
@@ -692,6 +693,15 @@ router.post("/reviews", async (req, res, next) => {
     const populatedReview = await Review.findById(review._id)
       .populate("vehicle")
       .populate("user", "fullName");
+
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "review",
+        title: "Danh gia moi",
+        message: `${req.user.fullName} vua gui danh gia cho ${populatedReview.vehicle?.name || "san pham"}.`,
+        link: "/admin.html"
+      });
+    }
 
     res.status(201).json({ message: "Da gui danh gia", review: populatedReview });
   } catch (error) {
