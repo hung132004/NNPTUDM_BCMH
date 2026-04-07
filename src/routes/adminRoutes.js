@@ -11,6 +11,7 @@ const Review = require("../models/Review");
 const Promotion = require("../models/Promotion");
 const Invoice = require("../models/Invoice");
 const Warranty = require("../models/Warranty");
+const { createNotification } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -38,7 +39,18 @@ router.use(protect, authorize("admin"));
 
 router.get("/dashboard", async (_req, res, next) => {
   try {
-    const [users, vehicles, accessories, orders, promotions, reviews, brands, categories] = await Promise.all([
+    const [
+      users,
+      vehicles,
+      accessories,
+      orders,
+      invoices,
+      warranties,
+      promotions,
+      reviews,
+      brands,
+      categories
+    ] = await Promise.all([
       User.find().select("-password").sort({ createdAt: -1 }),
       Vehicle.find().populate("brand category").sort({ createdAt: -1 }),
       Accessory.find().sort({ createdAt: -1 }),
@@ -150,6 +162,13 @@ router.patch("/orders/:id/status", async (req, res, next) => {
     if (!order) {
       return res.status(404).json({ message: "Khong tim thay don hang" });
     }
+
+    await createNotification(order.user._id || order.user, {
+      type: "order_status",
+      title: "Đơn hàng cập nhật trạng thái",
+      message: `Đơn hàng ${order._id} đã được chuyển sang trạng thái ${order.status}.`,
+      link: `/orders/${order._id}`
+    });
 
     res.json({ message: "Cap nhat trang thai thanh cong", order });
   } catch (error) {

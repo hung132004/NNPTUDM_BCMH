@@ -11,11 +11,17 @@ const elements = {
   orders: document.getElementById("admin-orders"),
   users: document.getElementById("admin-users"),
   reviews: document.getElementById("admin-reviews"),
+  notificationsList: document.getElementById("notifications-list-admin"),
+  notificationCount: document.getElementById("notification-count"),
+  notificationToggle: document.getElementById("notification-toggle"),
+  markAllReadBtn: document.getElementById("mark-all-read-admin"),
   brandSelect: document.getElementById("brand-select"),
   categorySelect: document.getElementById("category-select"),
   thumbnailPreview: document.getElementById("thumbnail-preview"),
   tabButtons: document.querySelectorAll("[data-admin-tab]")
 };
+
+let notifications = [];
 
 function requireAdmin() {
   if (!auth.token || !auth.user || auth.user.role !== "admin") {
@@ -51,6 +57,14 @@ async function api(path, options = {}) {
   }
 
   return data;
+}
+
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2400);
 }
 
 function formatCurrency(value) {
@@ -183,6 +197,69 @@ function renderOrders(orders) {
     : `<div class="mini-card"><p>Chua co don hang can xac nhan.</p></div>`;
 }
 
+function renderNotifications(list) {
+  elements.notificationsList.innerHTML = list.length
+    ? list
+        .map((notification) => `
+          <article class="mini-card${notification.isRead ? "" : " highlight"}">
+            <div class="list-card-header">
+              <strong>${notification.title}</strong>
+              <span class="notification-time">${formatNotificationDate(notification.createdAt)}</span>
+            </div>
+            <p>${notification.message}</p>
+            ${notification.link ? `<a class="ghost-btn small-btn" href="${notification.link}">Xem chi tiet</a>` : ""}
+            ${notification.isRead ? "" : `<button class="ghost-btn small-btn" onclick="markNotificationReadAdmin('${notification._id}')">Danh dau da doc</button>`}
+          </article>
+        `)
+        .join("")
+    : `<div class="mini-card"><p>Chua co thong bao nao.</p></div>`;
+}
+
+function updateNotificationBadgeAdmin(count) {
+  const total = Number(count || 0);
+  elements.notificationCount.textContent = String(total);
+  elements.notificationCount.classList.toggle("hidden", total <= 0);
+}
+
+async function fetchNotificationsAdmin() {
+  const data = await api("/api/notifications");
+  notifications = data.notifications || [];
+  renderNotifications(notifications);
+  updateNotificationBadgeAdmin(notifications.filter((item) => !item.isRead).length);
+}
+
+async function markNotificationReadAdmin(notificationId) {
+  try {
+    await api(`/api/notifications/${notificationId}/read`, {
+      method: "PATCH",
+      body: JSON.stringify({ isRead: true })
+    });
+    await fetchNotificationsAdmin();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function markAllReadAdmin() {
+  const unread = notifications.filter((item) => !item.isRead);
+  await Promise.all(
+    unread.map((item) =>
+      api(`/api/notifications/${item._id}/read`, {
+        method: "PATCH",
+        body: JSON.stringify({ isRead: true })
+      }).catch(() => null)
+    )
+  );
+  await fetchNotificationsAdmin();
+}
+
+function addNotificationAdmin(notification) {
+  notifications.unshift(notification);
+  renderNotifications(notifications);
+  updateNotificationBadgeAdmin(notifications.filter((item) => !item.isRead).length);
+  showToast(notification.title || "Thong bao moi");
+}
+
 function switchAdminTab(tabName) {
   elements.tabButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.adminTab === tabName);
@@ -191,6 +268,7 @@ function switchAdminTab(tabName) {
   document.getElementById("admin-overview-panel").classList.toggle("hidden", tabName !== "overview");
   document.getElementById("admin-products-panel").classList.toggle("hidden", tabName !== "products");
   document.getElementById("admin-people-panel").classList.toggle("hidden", tabName !== "people");
+  document.getElementById("admin-notifications-panel").classList.toggle("hidden", tabName !== "notifications");
 }
 
 async function loadPage() {
@@ -204,6 +282,14 @@ async function loadPage() {
     renderVehicles(data.vehicles);
     renderUsers(data.users);
     renderReviews(data.reviews);
+    await fetchNotificationsAdmin();
+
+    if (window.initNotificationClient) {
+      initNotificationClient({
+        userId: auth.user._id,
+        onNewNotification: addNotificationAdmin
+      });
+    }
   } catch (error) {
     elements.stats.innerHTML = `<div class="mini-card"><p>${error.message}</p></div>`;
   }
@@ -287,6 +373,8 @@ async function submitVehicle(event) {
 
 if (requireAdmin()) {
   document.getElementById("logout-btn").addEventListener("click", logout);
+  elements.notificationToggle.addEventListener("click", () => switchAdminTab("notifications"));
+  elements.markAllReadBtn.addEventListener("click", markAllReadAdmin);
   elements.tabButtons.forEach((button) => {
     button.addEventListener("click", () => switchAdminTab(button.dataset.adminTab));
   });

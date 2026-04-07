@@ -9,6 +9,7 @@ const Promotion = require("../models/Promotion");
 const Invoice = require("../models/Invoice");
 const Warranty = require("../models/Warranty");
 const Service = require("../models/Service");
+const { createNotification } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -498,6 +499,13 @@ router.post("/orders", async (req, res, next) => {
       storeAddress: STORE_ADDRESS
     });
 
+    await createNotification(req.user._id, {
+      type: "order_status",
+      title: "Đơn hàng đã được đặt",
+      message: `Đơn hàng ${order._id} đã được tạo thành công. Tổng ${summary.total} VND.`,
+      link: `/orders/${order._id}`
+    });
+
     cart.items = [];
     await cart.save();
 
@@ -555,6 +563,13 @@ router.post("/invoices/:id/pay", async (req, res, next) => {
     invoice.paidAt = new Date();
     await invoice.save();
     await Order.findByIdAndUpdate(invoice.order, { paymentStatus: "paid" });
+
+    await createNotification(req.user._id, {
+      type: "order_status",
+      title: "Thanh toán hóa đơn thành công",
+      message: `Hóa đơn ${invoice.invoiceNumber} đã được thanh toán.`,
+      link: `/invoices/${invoice._id}`
+    });
 
     res.json({ message: "Thanh toan hoa don thanh cong", invoice });
   } catch (error) {

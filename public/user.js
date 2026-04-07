@@ -8,11 +8,17 @@ const elements = {
   profile: document.getElementById("user-profile"),
   orders: document.getElementById("user-orders"),
   reviews: document.getElementById("user-reviews"),
+  notificationsList: document.getElementById("notifications-list"),
+  notificationCount: document.getElementById("notification-count"),
+  notificationToggle: document.getElementById("notification-toggle"),
+  markAllReadBtn: document.getElementById("mark-all-read"),
   reviewForm: document.getElementById("review-form"),
   reviewVehicle: document.getElementById("review-vehicle"),
   tabButtons: document.querySelectorAll("[data-tab-target]"),
   cartCount: document.getElementById("cart-count")
 };
+
+let notifications = [];
 
 function requireAuth() {
   if (!auth.token || !auth.user) {
@@ -43,6 +49,14 @@ async function api(path, options = {}) {
   }
 
   return data;
+}
+
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2400);
 }
 
 function formatCurrency(value) {
@@ -140,6 +154,70 @@ function switchTab(tabName) {
 
   document.getElementById("orders-panel").classList.toggle("hidden", tabName !== "orders");
   document.getElementById("reviews-panel").classList.toggle("hidden", tabName !== "reviews");
+  document.getElementById("notifications-panel").classList.toggle("hidden", tabName !== "notifications");
+}
+
+function renderNotifications(list) {
+  elements.notificationsList.innerHTML = list.length
+    ? list
+        .map((notification) => `
+          <article class="mini-card${notification.isRead ? "" : " read"}">
+            <div class="list-card-header">
+              <strong>${notification.title}</strong>
+              <span class="notification-time">${formatNotificationDate(notification.createdAt)}</span>
+            </div>
+            <p>${notification.message}</p>
+            ${notification.link ? `<a class="ghost-btn small-btn" href="${notification.link}">Xem chi tiet</a>` : ""}
+            ${notification.isRead ? "" : `<button class=\"ghost-btn small-btn\" onclick=\"markNotificationRead('${notification._id}')\">Danh dau da doc</button>`}
+          </article>
+        `)
+        .join("")
+    : `<div class="mini-card"><p>Chua co thong bao nao.</p></div>`;
+}
+
+function updateNotificationBadge(count) {
+  const total = Number(count || 0);
+  elements.notificationCount.textContent = String(total);
+  elements.notificationCount.classList.toggle("hidden", total <= 0);
+}
+
+async function fetchNotifications() {
+  const data = await api("/api/notifications");
+  notifications = data.notifications || [];
+  renderNotifications(notifications);
+  updateNotificationBadge(notifications.filter((item) => !item.isRead).length);
+}
+
+async function markNotificationRead(notificationId) {
+  try {
+    await api(`/api/notifications/${notificationId}/read`, {
+      method: "PATCH",
+      body: JSON.stringify({ isRead: true })
+    });
+    await fetchNotifications();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function markAllRead() {
+  const unread = notifications.filter((item) => !item.isRead);
+  await Promise.all(
+    unread.map((item) =>
+      api(`/api/notifications/${item._id}/read`, {
+        method: "PATCH",
+        body: JSON.stringify({ isRead: true })
+      }).catch(() => null)
+    )
+  );
+  await fetchNotifications();
+}
+
+function addNotification(notification) {
+  notifications.unshift(notification);
+  renderNotifications(notifications);
+  updateNotificationBadge(notifications.filter((item) => !item.isRead).length);
+  showToast(notification.title || "Thong bao moi");
 }
 
 async function loadPage() {
@@ -154,6 +232,14 @@ async function loadPage() {
     renderOrders(dashboard.orders);
     renderReviews(dashboard.reviews);
     renderReviewOptions(vehicles);
+    await fetchNotifications();
+
+    if (window.initNotificationClient) {
+      initNotificationClient({
+        userId: auth.user._id,
+        onNewNotification: addNotification
+      });
+    }
   } catch (error) {
     elements.profile.innerHTML = `<div class="mini-card"><p>${error.message}</p></div>`;
   }
@@ -180,6 +266,8 @@ async function submitReview(event) {
 if (requireAuth()) {
   document.getElementById("logout-btn").addEventListener("click", logout);
   elements.reviewForm.addEventListener("submit", submitReview);
+  elements.notificationToggle.addEventListener("click", () => switchTab("notifications"));
+  elements.markAllReadBtn.addEventListener("click", markAllRead);
   elements.tabButtons.forEach((button) => {
     button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
   });

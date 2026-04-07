@@ -1,3 +1,4 @@
+const http = require("http");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
@@ -5,11 +6,13 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 
 const connectDatabase = require("./config/db");
+const { initSocket } = require("./utils/socket");
 const authRoutes = require("./routes/authRoutes");
 const catalogRoutes = require("./routes/catalogRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 dotenv.config();
 
@@ -37,6 +40,7 @@ app.use("/api/catalog", catalogRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/service", serviceRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("*", (_req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
@@ -49,6 +53,13 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+const io = initSocket(server);
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+});
+
+server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

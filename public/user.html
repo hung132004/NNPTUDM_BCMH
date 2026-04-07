@@ -20,6 +20,10 @@
               Gio hang
               <span id="cart-count" class="count-badge hidden">0</span>
             </a>
+            <button id="notification-toggle" class="ghost-btn link-btn">
+              Thong bao
+              <span id="notification-count" class="count-badge hidden">0</span>
+            </button>
             <button id="logout-btn" class="ghost-btn">Dang xuat</button>
           </div>
         </div>
@@ -29,6 +33,15 @@
       <section class="account-tabs">
         <button class="tab-btn active" data-tab-target="orders">Don hang da mua</button>
         <button class="tab-btn" data-tab-target="reviews">Danh gia da gui</button>
+        <button class="tab-btn" data-tab-target="notifications">Thong bao</button>
+      </section>
+
+      <section id="notifications-panel" class="panel tab-panel hidden">
+        <div class="panel-head panel-head-inline">
+          <h2>Thong bao</h2>
+          <button id="mark-all-read" class="ghost-btn small-btn">Danh dau da doc</button>
+        </div>
+        <div id="notifications-list" class="stack-list"></div>
       </section>
 
       <section id="orders-panel" class="panel tab-panel">
@@ -52,6 +65,8 @@
       </section>
     </main>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/notification-client.js"></script>
     <script src="/user.js"></script>
   </body>
 </html>

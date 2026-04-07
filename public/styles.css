@@ -978,6 +978,19 @@ textarea {
   z-index: 40;
 }
 
+.panel-head-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-time {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-left: 12px;
+}
+
 @media (max-width: 1180px) {
   .hero-content {
     grid-template-columns: 1fr;
