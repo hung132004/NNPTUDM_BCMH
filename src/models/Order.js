@@ -22,6 +22,11 @@ const orderSchema = new mongoose.Schema(
       default: "pending"
     },
     paymentMethod: { type: String, enum: ["bank_transfer", "store_payment"], default: "store_payment" },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending"
+    },
     fulfillmentMethod: { type: String, enum: ["pickup", "delivery"], default: "pickup" },
     shippingAddress: { type: String, required: true },
     distanceKm: { type: Number, default: 0 },

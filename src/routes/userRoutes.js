@@ -6,6 +6,10 @@ const Review = require("../models/Review");
 const Vehicle = require("../models/Vehicle");
 const Accessory = require("../models/Accessory");
 const Promotion = require("../models/Promotion");
+const Invoice = require("../models/Invoice");
+const Warranty = require("../models/Warranty");
+const Service = require("../models/Service");
+const { createNotification, createNotificationForAdmins } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -56,6 +60,30 @@ function buildCartSummary(cart, promotion = null, fulfillmentMethod = "pickup", 
     storeAddress: STORE_ADDRESS,
     total
   };
+}
+
+function createInvoiceNumber(orderId) {
+  const suffix = String(orderId).slice(-6).toUpperCase();
+  return `INV-${new Date().getFullYear()}-${suffix}-${Date.now().toString().slice(-5)}`;
+}
+
+function buildInvoiceItems(items) {
+  return items.map((item) => {
+    const description =
+      item.itemType === "accessory"
+        ? item.accessory?.name || "Phu kien"
+        : item.vehicle?.name || "Xe do";
+
+    return {
+      itemType: item.itemType,
+      description,
+      vehicle: item.vehicle?._id || null,
+      accessory: item.accessory?._id || null,
+      quantity: item.quantity,
+      price: item.price,
+      total: item.price * item.quantity
+    };
+  });
 }
 
 async function geocodeAddress(address) {
@@ -432,6 +460,8 @@ router.post("/orders", async (req, res, next) => {
     const resolvedShippingAddress =
       normalizedFulfillmentMethod === "pickup" ? STORE_ADDRESS : String(shippingAddress || "").trim();
 
+    const invoiceItems = buildInvoiceItems(cart.items);
+
     const order = await Order.create({
       user: req.user._id,
       items: cart.items.map((item) => ({
@@ -452,15 +482,199 @@ router.post("/orders", async (req, res, next) => {
       storeAddress: STORE_ADDRESS
     });
 
+    const invoice = await Invoice.create({
+      order: order._id,
+      user: req.user._id,
+      invoiceNumber: createInvoiceNumber(order._id),
+      items: invoiceItems,
+      subtotalAmount: summary.subtotal,
+      discountAmount: summary.discountAmount,
+      shippingFee: summary.shippingFee,
+      totalAmount: summary.total,
+      paymentMethod: normalizedPaymentMethod,
+      paymentStatus: "pending",
+      issuedAt: new Date(),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      shippingAddress: resolvedShippingAddress,
+      storeAddress: STORE_ADDRESS
+    });
+
+    await createNotification(req.user._id, {
+      type: "order_status",
+      title: "Đơn hàng đã được đặt",
+      message: `Đơn hàng ${order._id} đã được tạo thành công. Tổng ${summary.total} VND.`,
+      link: `/orders/${order._id}`
+    });
+
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "system",
+        title: "Don hang moi",
+        message: `${req.user.fullName} vua tao don hang ${order._id}.`,
+        link: "/admin.html"
+      });
+    }
+
     cart.items = [];
     await cart.save();
 
     const populatedOrder = await Order.findById(order._id).populate("items.vehicle items.accessory");
+
+    const populatedInvoice = await Invoice.findById(invoice._id).populate("order").populate("items.vehicle items.accessory");
+    
     res.status(201).json({
       message: "Dat hang thanh cong",
       order: populatedOrder,
+      invoice: populatedInvoice,
       summary
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/invoices", async (req, res, next) => {
+  try {
+    const invoices = await Invoice.find({ user: req.user._id }).populate("order").sort({ createdAt: -1 });
+    res.json({ invoices });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/invoices/:id", async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id })
+      .populate("order")
+      .populate("items.vehicle items.accessory");
+
+    if (!invoice) {
+      return res.status(404).json({ message: "Khong tim thay hoa don" });
+    }
+
+    res.json({ invoice });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/invoices/:id/pay", async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id });
+    if (!invoice) {
+      return res.status(404).json({ message: "Khong tim thay hoa don" });
+    }
+
+    if (invoice.paymentStatus === "paid") {
+      return res.status(400).json({ message: "Hoa don da duoc thanh toan" });
+    }
+
+    invoice.paymentStatus = "paid";
+    invoice.paidAt = new Date();
+    await invoice.save();
+    await Order.findByIdAndUpdate(invoice.order, { paymentStatus: "paid" });
+
+    await createNotification(req.user._id, {
+      type: "order_status",
+      title: "Thanh toán hóa đơn thành công",
+      message: `Hóa đơn ${invoice.invoiceNumber} đã được thanh toán.`,
+      link: `/invoices/${invoice._id}`
+    });
+
+    res.json({ message: "Thanh toan hoa don thanh cong", invoice });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/warranties", async (req, res, next) => {
+  try {
+    const { orderId, serviceId, itemType, accessoryId, vehicleId, warrantyType, issueDescription } = req.body;
+    const normalizedItemType = String(itemType || "").toLowerCase();
+
+    if (!["accessory", "vehicle", "service"].includes(normalizedItemType)) {
+      return res.status(400).json({ message: "Loai bao hanh khong hop le" });
+    }
+
+    const warrantyData = {
+      user: req.user._id,
+      itemType: normalizedItemType,
+      warrantyType: warrantyType || "standard",
+      issueDescription: String(issueDescription || "").trim()
+    };
+
+    if (normalizedItemType === "service") {
+      const service = await Service.findOne({ _id: serviceId, user: req.user._id });
+      if (!service) {
+        return res.status(404).json({ message: "Khong tim thay dich vu de bao hanh" });
+      }
+      warrantyData.service = service._id;
+    } else {
+      if (!orderId) {
+        return res.status(400).json({ message: "Vui long cung cap ma don hang" });
+      }
+
+      const order = await Order.findOne({ _id: orderId, user: req.user._id }).populate("items.vehicle items.accessory");
+      if (!order) {
+        return res.status(404).json({ message: "Khong tim thay don hang" });
+      }
+
+      const item = order.items.find((entry) => {
+        if (normalizedItemType === "accessory") {
+          return entry.itemType === "accessory" && String(entry.accessory?._id || entry.accessory) === String(accessoryId);
+        }
+        return entry.itemType === "vehicle" && String(entry.vehicle?._id || entry.vehicle) === String(vehicleId);
+      });
+
+      if (!item) {
+        return res.status(404).json({ message: "Khong tim thay san pham trong don hang" });
+      }
+
+      warrantyData.order = order._id;
+      warrantyData.accessory = normalizedItemType === "accessory" ? item.accessory?._id || item.accessory : null;
+      warrantyData.vehicle = normalizedItemType === "vehicle" ? item.vehicle?._id || item.vehicle : null;
+    }
+
+    const warranty = await Warranty.create(warrantyData);
+    const populatedWarranty = await Warranty.findById(warranty._id).populate("order service vehicle accessory");
+
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "system",
+        title: "Yeu cau bao hanh moi",
+        message: `${req.user.fullName} vua gui yeu cau bao hanh.`,
+        link: "/admin.html"
+      });
+    }
+
+    res.status(201).json({ message: "Da tao yeu cau bao hanh", warranty: populatedWarranty });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/warranties", async (req, res, next) => {
+  try {
+    const warranties = await Warranty.find({ user: req.user._id })
+      .populate("order service vehicle accessory")
+      .sort({ createdAt: -1 });
+    res.json({ warranties });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/warranties/:id", async (req, res, next) => {
+  try {
+    const warranty = await Warranty.findOne({ _id: req.params.id, user: req.user._id }).populate(
+      "order service vehicle accessory"
+    );
+
+    if (!warranty) {
+      return res.status(404).json({ message: "Khong tim thay yeu cau bao hanh" });
+    }
+
+    res.json({ warranty });
   } catch (error) {
     next(error);
   }
@@ -479,6 +693,15 @@ router.post("/reviews", async (req, res, next) => {
     const populatedReview = await Review.findById(review._id)
       .populate("vehicle")
       .populate("user", "fullName");
+
+    if (req.user.role !== "admin") {
+      await createNotificationForAdmins({
+        type: "review",
+        title: "Danh gia moi",
+        message: `${req.user.fullName} vua gui danh gia cho ${populatedReview.vehicle?.name || "san pham"}.`,
+        link: "/admin.html"
+      });
+    }
 
     res.status(201).json({ message: "Da gui danh gia", review: populatedReview });
   } catch (error) {

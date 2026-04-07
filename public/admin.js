@@ -11,11 +11,18 @@ const elements = {
   orders: document.getElementById("admin-orders"),
   users: document.getElementById("admin-users"),
   reviews: document.getElementById("admin-reviews"),
+  warranties: document.getElementById("admin-warranties"),
+  notificationsList: document.getElementById("notifications-list-admin"),
+  notificationCount: document.getElementById("notification-count"),
+  notificationToggle: document.getElementById("notification-toggle"),
+  markAllReadBtn: document.getElementById("mark-all-read-admin"),
   brandSelect: document.getElementById("brand-select"),
   categorySelect: document.getElementById("category-select"),
   thumbnailPreview: document.getElementById("thumbnail-preview"),
   tabButtons: document.querySelectorAll("[data-admin-tab]")
 };
+
+let notifications = [];
 
 function requireAdmin() {
   if (!auth.token || !auth.user || auth.user.role !== "admin") {
@@ -53,11 +60,31 @@ async function api(path, options = {}) {
   return data;
 }
 
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2400);
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND"
   }).format(value || 0);
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return new Date(value).toLocaleDateString("vi-VN");
+  } catch {
+    return value;
+  }
 }
 
 function renderStats(data) {
@@ -153,6 +180,18 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
+function getWarrantyStatusLabel(status) {
+  const labels = {
+    active: "Dang hieu luc",
+    claimed: "Da tiep nhan",
+    resolved: "Da xu ly",
+    rejected: "Tu choi",
+    expired: "Het han"
+  };
+
+  return labels[status] || status;
+}
+
 function renderOrders(orders) {
   elements.orders.innerHTML = orders.length
     ? orders
@@ -183,6 +222,108 @@ function renderOrders(orders) {
     : `<div class="mini-card"><p>Chua co don hang can xac nhan.</p></div>`;
 }
 
+function getWarrantyTargetLabel(warranty) {
+  if (warranty.itemType === "service") {
+    return warranty.service?.serviceType || "Dich vu";
+  }
+
+  if (warranty.itemType === "vehicle") {
+    return warranty.vehicle?.name || "Xe";
+  }
+
+  return warranty.accessory?.name || "Phu kien";
+}
+
+function renderWarranties(warranties) {
+  elements.warranties.innerHTML = warranties.length
+    ? warranties
+        .map(
+          (warranty) => `
+            <article class="mini-card">
+              <div class="list-card-header">
+                <strong>${warranty.user?.fullName || "Khach hang"} - ${getWarrantyTargetLabel(warranty)}</strong>
+                <span class="status-badge status-${warranty.status}">${getWarrantyStatusLabel(warranty.status)}</span>
+              </div>
+              <p>Loai: ${warranty.itemType} / ${warranty.warrantyType || "standard"}</p>
+              <p>Mo ta loi: ${warranty.issueDescription || "Chua co mo ta"}</p>
+              <p>Bat dau: ${formatDate(warranty.startDate)} / Het han: ${formatDate(warranty.endDate)}</p>
+              <p>Ghi chu xu ly: ${warranty.resolutionNotes || "Chua co"}</p>
+              <div class="inline-actions">
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'claimed')">Tiep nhan</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'resolved')">Da xu ly</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'rejected')">Tu choi</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'expired')">Het han</button>
+              </div>
+            </article>
+          `
+        )
+        .join("")
+    : `<div class="mini-card"><p>Chua co yeu cau bao hanh nao.</p></div>`;
+}
+
+function renderNotifications(list) {
+  elements.notificationsList.innerHTML = list.length
+    ? list
+        .map((notification) => `
+          <article class="mini-card${notification.isRead ? "" : " highlight"}">
+            <div class="list-card-header">
+              <strong>${notification.title}</strong>
+              <span class="notification-time">${formatNotificationDate(notification.createdAt)}</span>
+            </div>
+            <p>${notification.message}</p>
+            ${notification.link ? `<a class="ghost-btn small-btn" href="${notification.link}">Xem chi tiet</a>` : ""}
+            ${notification.isRead ? "" : `<button class="ghost-btn small-btn" onclick="markNotificationReadAdmin('${notification._id}')">Danh dau da doc</button>`}
+          </article>
+        `)
+        .join("")
+    : `<div class="mini-card"><p>Chua co thong bao nao.</p></div>`;
+}
+
+function updateNotificationBadgeAdmin(count) {
+  const total = Number(count || 0);
+  elements.notificationCount.textContent = String(total);
+  elements.notificationCount.classList.toggle("hidden", total <= 0);
+}
+
+async function fetchNotificationsAdmin() {
+  const data = await api("/api/notifications");
+  notifications = data.notifications || [];
+  renderNotifications(notifications);
+  updateNotificationBadgeAdmin(notifications.filter((item) => !item.isRead).length);
+}
+
+async function markNotificationReadAdmin(notificationId) {
+  try {
+    await api(`/api/notifications/${notificationId}/read`, {
+      method: "PATCH",
+      body: JSON.stringify({ isRead: true })
+    });
+    await fetchNotificationsAdmin();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function markAllReadAdmin() {
+  const unread = notifications.filter((item) => !item.isRead);
+  await Promise.all(
+    unread.map((item) =>
+      api(`/api/notifications/${item._id}/read`, {
+        method: "PATCH",
+        body: JSON.stringify({ isRead: true })
+      }).catch(() => null)
+    )
+  );
+  await fetchNotificationsAdmin();
+}
+
+function addNotificationAdmin(notification) {
+  notifications.unshift(notification);
+  renderNotifications(notifications);
+  updateNotificationBadgeAdmin(notifications.filter((item) => !item.isRead).length);
+  showToast(notification.title || "Thong bao moi");
+}
+
 function switchAdminTab(tabName) {
   elements.tabButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.adminTab === tabName);
@@ -191,6 +332,8 @@ function switchAdminTab(tabName) {
   document.getElementById("admin-overview-panel").classList.toggle("hidden", tabName !== "overview");
   document.getElementById("admin-products-panel").classList.toggle("hidden", tabName !== "products");
   document.getElementById("admin-people-panel").classList.toggle("hidden", tabName !== "people");
+  document.getElementById("admin-warranties-panel").classList.toggle("hidden", tabName !== "warranties");
+  document.getElementById("admin-notifications-panel").classList.toggle("hidden", tabName !== "notifications");
 }
 
 async function loadPage() {
@@ -204,6 +347,15 @@ async function loadPage() {
     renderVehicles(data.vehicles);
     renderUsers(data.users);
     renderReviews(data.reviews);
+    renderWarranties(data.warranties || []);
+    await fetchNotificationsAdmin();
+
+    if (window.initNotificationClient) {
+      initNotificationClient({
+        userId: auth.user._id,
+        onNewNotification: addNotificationAdmin
+      });
+    }
   } catch (error) {
     elements.stats.innerHTML = `<div class="mini-card"><p>${error.message}</p></div>`;
   }
@@ -253,6 +405,26 @@ window.deleteVehicle = async function deleteVehicle(id) {
   }
 };
 
+window.updateWarrantyStatus = async function updateWarrantyStatus(id, status) {
+  const resolutionNotes =
+    status === "resolved"
+      ? prompt("Nhap ghi chu xu ly bao hanh:", "Da xu ly thanh cong") || ""
+      : status === "rejected"
+        ? prompt("Nhap ly do tu choi:", "Khong du dieu kien bao hanh") || ""
+        : "";
+
+  try {
+    await api(`/api/admin/warranties/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, resolutionNotes })
+    });
+    await loadPage();
+    switchAdminTab("warranties");
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
 async function submitVehicle(event) {
   event.preventDefault();
   const rawFormData = new FormData(event.target);
@@ -287,6 +459,8 @@ async function submitVehicle(event) {
 
 if (requireAdmin()) {
   document.getElementById("logout-btn").addEventListener("click", logout);
+  elements.notificationToggle.addEventListener("click", () => switchAdminTab("notifications"));
+  elements.markAllReadBtn.addEventListener("click", markAllReadAdmin);
   elements.tabButtons.forEach((button) => {
     button.addEventListener("click", () => switchAdminTab(button.dataset.adminTab));
   });

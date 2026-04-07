@@ -866,6 +866,27 @@ textarea {
   background: rgba(214, 90, 77, 0.2);
 }
 
+.status-active {
+  color: #1b6b42;
+  background: rgba(73, 198, 126, 0.22);
+}
+
+.status-claimed {
+  color: #244ca6;
+  background: rgba(93, 139, 255, 0.2);
+}
+
+.status-resolved {
+  color: #0f5f63;
+  background: rgba(85, 197, 205, 0.22);
+}
+
+.status-rejected,
+.status-expired {
+  color: #8f2a24;
+  background: rgba(214, 90, 77, 0.2);
+}
+
 .product-hero,
 .product-copy {
   height: 100%;
@@ -914,7 +935,8 @@ textarea {
 }
 
 .auth-form input,
-.auth-form select {
+.auth-form select,
+.auth-form textarea {
   width: 100%;
   padding: 16px 18px;
   border: 1px solid var(--line-strong);
@@ -929,7 +951,8 @@ textarea {
 }
 
 .auth-form input:focus,
-.auth-form select:focus {
+.auth-form select:focus,
+.auth-form textarea:focus {
   border-color: rgba(197, 90, 45, 0.45);
   box-shadow: 0 0 0 4px rgba(197, 90, 45, 0.1);
 }
@@ -976,6 +999,19 @@ textarea {
   background: linear-gradient(135deg, #211914, #120d0a);
   box-shadow: 0 18px 30px rgba(18, 13, 10, 0.24);
   z-index: 40;
+}
+
+.panel-head-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-time {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-left: 12px;
 }
 
 @media (max-width: 1180px) {

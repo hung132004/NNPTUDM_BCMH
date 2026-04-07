@@ -16,6 +16,10 @@
           </div>
           <div class="nav-actions">
             <a class="ghost-btn link-btn" href="/">Trang chu</a>
+            <button id="notification-toggle" class="ghost-btn link-btn">
+              Thong bao
+              <span id="notification-count" class="count-badge hidden">0</span>
+            </button>
             <button id="logout-btn" class="ghost-btn">Dang xuat</button>
           </div>
         </div>
@@ -25,6 +29,16 @@
         <button class="tab-btn active" data-admin-tab="overview">Tong quan</button>
         <button class="tab-btn" data-admin-tab="products">San pham</button>
         <button class="tab-btn" data-admin-tab="people">Khach hang & Review</button>
+        <button class="tab-btn" data-admin-tab="warranties">Bao hanh</button>
+        <button class="tab-btn" data-admin-tab="notifications">Thong bao</button>
+      </section>
+
+      <section id="admin-notifications-panel" class="panel tab-panel hidden">
+        <div class="panel-head panel-head-inline">
+          <h2>Thong bao</h2>
+          <button id="mark-all-read-admin" class="ghost-btn small-btn">Danh dau da doc</button>
+        </div>
+        <div id="notifications-list-admin" class="stack-list"></div>
       </section>
 
       <section id="admin-overview-panel" class="panel tab-panel">
@@ -92,8 +106,17 @@
           </div>
         </div>
       </section>
+
+      <section id="admin-warranties-panel" class="panel tab-panel hidden">
+        <div class="panel-head">
+          <h2>Quan ly bao hanh</h2>
+        </div>
+        <div id="admin-warranties" class="stack-list"></div>
+      </section>
     </main>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/notification-client.js"></script>
     <script src="/admin.js"></script>
   </body>
 </html>

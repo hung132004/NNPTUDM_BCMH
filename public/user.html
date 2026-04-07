@@ -20,6 +20,10 @@
               Gio hang
               <span id="cart-count" class="count-badge hidden">0</span>
             </a>
+            <button id="notification-toggle" class="ghost-btn link-btn">
+              Thong bao
+              <span id="notification-count" class="count-badge hidden">0</span>
+            </button>
             <button id="logout-btn" class="ghost-btn">Dang xuat</button>
           </div>
         </div>
@@ -29,6 +33,16 @@
       <section class="account-tabs">
         <button class="tab-btn active" data-tab-target="orders">Don hang da mua</button>
         <button class="tab-btn" data-tab-target="reviews">Danh gia da gui</button>
+        <button class="tab-btn" data-tab-target="warranties">Bao hanh</button>
+        <button class="tab-btn" data-tab-target="notifications">Thong bao</button>
+      </section>
+
+      <section id="notifications-panel" class="panel tab-panel hidden">
+        <div class="panel-head panel-head-inline">
+          <h2>Thong bao</h2>
+          <button id="mark-all-read" class="ghost-btn small-btn">Danh dau da doc</button>
+        </div>
+        <div id="notifications-list" class="stack-list"></div>
       </section>
 
       <section id="orders-panel" class="panel tab-panel">
@@ -50,8 +64,31 @@
         </form>
         <div id="user-reviews" class="stack-list"></div>
       </section>
+
+      <section id="warranties-panel" class="panel tab-panel hidden">
+        <div class="panel-head">
+          <h2>Yeu cau bao hanh</h2>
+        </div>
+        <form id="warranty-form" class="auth-form compact-form">
+          <select name="itemType" id="warranty-item-type" required>
+            <option value="vehicle">Bao hanh xe</option>
+            <option value="accessory">Bao hanh phu kien</option>
+            <option value="service">Bao hanh dich vu</option>
+          </select>
+          <select name="orderId" id="warranty-order-select"></select>
+          <select name="vehicleId" id="warranty-vehicle-select"></select>
+          <select name="accessoryId" id="warranty-accessory-select" class="hidden"></select>
+          <select name="serviceId" id="warranty-service-select" class="hidden"></select>
+          <input name="warrantyType" type="text" placeholder="Loai bao hanh (mac dinh: standard)" />
+          <textarea name="issueDescription" rows="4" placeholder="Mo ta loi can bao hanh" required></textarea>
+          <button type="submit" class="primary-btn">Gui yeu cau bao hanh</button>
+        </form>
+        <div id="user-warranties" class="stack-list"></div>
+      </section>
     </main>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/notification-client.js"></script>
     <script src="/user.js"></script>
   </body>
 </html>
