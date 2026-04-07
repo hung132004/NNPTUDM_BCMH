@@ -9,6 +9,9 @@ const Accessory = require("../models/Accessory");
 const Order = require("../models/Order");
 const Review = require("../models/Review");
 const Promotion = require("../models/Promotion");
+const Invoice = require("../models/Invoice");
+const Warranty = require("../models/Warranty");
+const { createNotification } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -36,11 +39,24 @@ router.use(protect, authorize("admin"));
 
 router.get("/dashboard", async (_req, res, next) => {
   try {
-    const [users, vehicles, accessories, orders, promotions, reviews, brands, categories] = await Promise.all([
+    const [
+      users,
+      vehicles,
+      accessories,
+      orders,
+      invoices,
+      warranties,
+      promotions,
+      reviews,
+      brands,
+      categories
+    ] = await Promise.all([
       User.find().select("-password").sort({ createdAt: -1 }),
       Vehicle.find().populate("brand category").sort({ createdAt: -1 }),
       Accessory.find().sort({ createdAt: -1 }),
       Order.find().populate("user", "fullName email").populate("items.vehicle items.accessory").sort({ createdAt: -1 }),
+      Invoice.find().populate("user", "fullName email").populate("order").sort({ createdAt: -1 }),
+      Warranty.find().populate("user", "fullName email").populate("order service vehicle accessory").sort({ createdAt: -1 }),
       Promotion.find().sort({ createdAt: -1 }),
       Review.find().populate("user", "fullName email").populate("vehicle", "name slug").sort({ createdAt: -1 }),
       Brand.find().sort({ name: 1 }),
@@ -53,6 +69,8 @@ router.get("/dashboard", async (_req, res, next) => {
         totalVehicles: vehicles.length,
         totalAccessories: accessories.length,
         totalOrders: orders.length,
+        totalInvoices: invoices.length,
+        totalWarranties: warranties.length,
         totalReviews: reviews.length,
         revenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
       },
@@ -60,6 +78,8 @@ router.get("/dashboard", async (_req, res, next) => {
       vehicles,
       accessories,
       orders,
+      invoices,
+      warranties,
       promotions,
       reviews,
       brands,
@@ -143,7 +163,100 @@ router.patch("/orders/:id/status", async (req, res, next) => {
       return res.status(404).json({ message: "Khong tim thay don hang" });
     }
 
+    await createNotification(order.user._id || order.user, {
+      type: "order_status",
+      title: "Đơn hàng cập nhật trạng thái",
+      message: `Đơn hàng ${order._id} đã được chuyển sang trạng thái ${order.status}.`,
+      link: `/orders/${order._id}`
+    });
+
     res.json({ message: "Cap nhat trang thai thanh cong", order });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/invoices", async (req, res, next) => {
+  try {
+    const invoices = await Invoice.find().populate("user", "fullName email").populate("order").sort({ createdAt: -1 });
+    res.json({ invoices });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/invoices/:id", async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id).populate("user", "fullName email").populate("order");
+    if (!invoice) {
+      return res.status(404).json({ message: "Khong tim thay hoa don" });
+    }
+    res.json({ invoice });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/invoices/:id/status", async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: "Khong tim thay hoa don" });
+    }
+
+    invoice.paymentStatus = req.body.paymentStatus || invoice.paymentStatus;
+    invoice.paidAt = invoice.paymentStatus === "paid" ? new Date() : invoice.paidAt;
+    invoice.notes = req.body.notes || invoice.notes;
+    await invoice.save();
+
+    if (invoice.paymentStatus === "paid") {
+      await Order.findByIdAndUpdate(invoice.order, { paymentStatus: "paid" });
+    }
+
+    res.json({ message: "Cap nhat trang thai hoa don thanh cong", invoice });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/warranties", async (req, res, next) => {
+  try {
+    const warranties = await Warranty.find().populate("user", "fullName email").populate("order service vehicle accessory").sort({ createdAt: -1 });
+    res.json({ warranties });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/warranties/:id", async (req, res, next) => {
+  try {
+    const warranty = await Warranty.findById(req.params.id).populate("user", "fullName email").populate("order service vehicle accessory");
+    if (!warranty) {
+      return res.status(404).json({ message: "Khong tim thay yeu cau bao hanh" });
+    }
+    res.json({ warranty });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/warranties/:id/status", async (req, res, next) => {
+  try {
+    const warranty = await Warranty.findById(req.params.id);
+    if (!warranty) {
+      return res.status(404).json({ message: "Khong tim thay yeu cau bao hanh" });
+    }
+
+    warranty.status = req.body.status || warranty.status;
+    if (req.body.resolutionNotes) {
+      warranty.resolutionNotes = req.body.resolutionNotes;
+    }
+    if (warranty.status === "claimed") {
+      warranty.claimDate = new Date();
+    }
+    await warranty.save();
+
+    res.json({ message: "Cap nhat trang thai bao hanh thanh cong", warranty });
   } catch (error) {
     next(error);
   }

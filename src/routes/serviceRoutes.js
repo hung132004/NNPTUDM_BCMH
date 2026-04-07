@@ -2,6 +2,7 @@ const express = require("express");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const Service = require("../models/Service");
 const Vehicle = require("../models/Vehicle");
+const { createNotification } = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -105,6 +106,13 @@ router.patch("/:id", protect, authorize("admin"), async (req, res, next) => {
     if (!service) {
       return res.status(404).json({ message: "Khong tim thay lich bao duong" });
     }
+
+    await createNotification(service.user, {
+      type: "system",
+      title: "Cập nhật dịch vụ",
+      message: `Lịch dịch vụ ${service.serviceType} đã chuyển sang trạng thái ${service.status}.`,
+      link: `/services/${service._id}`
+    });
 
     res.json({
       message: "Da cap nhat trang thai",

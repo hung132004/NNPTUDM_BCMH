@@ -10,6 +10,8 @@ const Order = require("./models/Order");
 const Review = require("./models/Review");
 const Promotion = require("./models/Promotion");
 const Service = require("./models/Service");
+const Invoice = require("./models/Invoice");
+const Warranty = require("./models/Warranty");
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ async function seed() {
     Accessory.deleteMany(),
     Cart.deleteMany(),
     Order.deleteMany(),
+    Invoice.deleteMany(),
+    Warranty.deleteMany(),
     Review.deleteMany(),
     Promotion.deleteMany(),
     Service.deleteMany()
@@ -146,7 +150,7 @@ async function seed() {
     ]
   });
 
-  await Order.create({
+  const seededOrder = await Order.create({
     user: user._id,
     items: [
       {
@@ -168,9 +172,46 @@ async function seed() {
     totalAmount: (vehicles[1].salePrice || vehicles[1].price) + (accessories[1].salePrice || accessories[1].price) * 2 + 40000,
     status: "confirmed",
     paymentMethod: "bank_transfer",
+    paymentStatus: "pending",
     fulfillmentMethod: "delivery",
     shippingAddress: "Ha Noi",
     distanceKm: 2,
+    storeAddress: "1 DN11, Khu Pho 4, Dong Hung Thuan, Ho Chi Minh"
+  });
+
+  await Invoice.create({
+    order: seededOrder._id,
+    user: user._id,
+    invoiceNumber: "INV-SEED-0001",
+    items: [
+      {
+        itemType: "vehicle",
+        description: vehicles[1].name,
+        vehicle: vehicles[1]._id,
+        accessory: null,
+        quantity: 1,
+        price: vehicles[1].salePrice || vehicles[1].price,
+        total: vehicles[1].salePrice || vehicles[1].price
+      },
+      {
+        itemType: "accessory",
+        description: accessories[1].name,
+        vehicle: null,
+        accessory: accessories[1]._id,
+        quantity: 2,
+        price: accessories[1].salePrice || accessories[1].price,
+        total: (accessories[1].salePrice || accessories[1].price) * 2
+      }
+    ],
+    subtotalAmount: (vehicles[1].salePrice || vehicles[1].price) + (accessories[1].salePrice || accessories[1].price) * 2,
+    discountAmount: 0,
+    shippingFee: 40000,
+    totalAmount: (vehicles[1].salePrice || vehicles[1].price) + (accessories[1].salePrice || accessories[1].price) * 2 + 40000,
+    paymentMethod: "bank_transfer",
+    paymentStatus: "pending",
+    issuedAt: new Date(),
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    shippingAddress: "Ha Noi",
     storeAddress: "1 DN11, Khu Pho 4, Dong Hung Thuan, Ho Chi Minh"
   });
 
