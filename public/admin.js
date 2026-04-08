@@ -206,7 +206,7 @@ function renderOrders(orders) {
                   return `${resource?.name || "San pham"} x${item.quantity}`;
                 })
                 .join(", ")}</p>
-              <p>${order.paymentMethod === "bank_transfer" ? "Chuyen khoan ngan hang" : "Thanh toan tai cua hang"}</p>
+              <p>${order.paymentMethod === "bank_transfer" ? "Giao dich ma QR" : "Tien mat"}</p>
               <p>${order.fulfillmentMethod === "delivery" ? `Ship tan noi / ${order.distanceKm || 0} km` : "Nhan tai cua hang"}</p>
               <p>${formatCurrency(order.totalAmount)}</p>
               <p>${order.shippingAddress}</p>

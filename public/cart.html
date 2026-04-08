@@ -57,14 +57,32 @@
           <div class="checkout-grid">
             <div class="mini-card checkout-card">
               <strong>Hinh thuc thanh toan</strong>
-              <label><input type="radio" name="payment-method" value="bank_transfer" checked /> Chuyen khoan ngan hang</label>
-              <label><input type="radio" name="payment-method" value="store_payment" /> Thanh toan tai cua hang</label>
+              <label><input type="radio" name="payment-method" value="store_payment" checked /> Tien mat</label>
+              <label><input type="radio" name="payment-method" value="bank_transfer" /> Giao dich ma QR</label>
             </div>
             <div class="mini-card checkout-card">
               <strong>Hinh thuc nhan hang</strong>
               <label><input type="radio" name="fulfillment-method" value="pickup" checked /> Nhan tai cua hang</label>
               <label><input type="radio" name="fulfillment-method" value="delivery" /> Ship tan noi</label>
               <p id="store-address-note"></p>
+            </div>
+          </div>
+          <div id="qr-payment-card" class="mini-card qr-payment-card hidden">
+            <div class="qr-payment-head">
+              <div>
+                <strong>Quet ma de thanh toan</strong>
+                <p id="qr-payment-caption">Ma QR se tu dong cap nhat theo tong thanh toan hien tai.</p>
+              </div>
+              <span id="qr-payment-total" class="status-badge status-confirmed">0 VND</span>
+            </div>
+            <div class="qr-payment-body">
+              <img id="qr-payment-image" class="qr-payment-image" alt="Ma QR thanh toan" />
+              <div class="qr-payment-meta">
+                <p><span>Ngan hang</span><strong id="qr-bank-name">Dang cap nhat</strong></p>
+                <p><span>Chu tai khoan</span><strong id="qr-account-name">Dang cap nhat</strong></p>
+                <p><span>So tai khoan</span><strong id="qr-account-number">Dang cap nhat</strong></p>
+                <p><span>Noi dung</span><strong id="qr-transfer-note">THANH TOAN XE DO</strong></p>
+              </div>
             </div>
           </div>
           <div class="delivery-shell">

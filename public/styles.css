@@ -738,6 +738,66 @@ textarea {
   color: var(--text);
 }
 
+.qr-payment-card {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+  border: 1px solid rgba(15, 95, 99, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(85, 197, 205, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 248, 248, 0.92));
+}
+
+.qr-payment-head,
+.qr-payment-meta p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.qr-payment-head {
+  align-items: flex-start;
+}
+
+.qr-payment-head p,
+.qr-payment-meta p {
+  margin: 6px 0 0;
+}
+
+.qr-payment-body {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.qr-payment-image {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  padding: 14px;
+  border-radius: 24px;
+  background: #fff;
+  border: 1px solid rgba(34, 22, 15, 0.08);
+  box-shadow: 0 18px 32px rgba(15, 95, 99, 0.1);
+  image-rendering: crisp-edges;
+}
+
+.qr-payment-meta {
+  display: grid;
+  gap: 12px;
+}
+
+.qr-payment-meta span {
+  color: var(--muted);
+}
+
+.qr-payment-meta strong {
+  text-align: right;
+}
+
 .delivery-shell {
   display: grid;
   gap: 16px;
@@ -1047,6 +1107,14 @@ textarea {
   .checkout-grid {
     grid-template-columns: 1fr;
   }
+
+  .qr-payment-body {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-payment-image {
+    margin: 0 auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1083,6 +1151,8 @@ textarea {
   .account-tabs,
   .delivery-inputs,
   .map-card-head,
+  .qr-payment-head,
+  .qr-payment-meta p,
   .invoice-topline,
   .invoice-row,
   .invoice-total,

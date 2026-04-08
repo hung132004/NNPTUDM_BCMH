@@ -17,6 +17,11 @@ const STORE_ADDRESS = "1 DN11, Khu Pho 4, Dong Hung Thuan, Ho Chi Minh";
 const STORE_COORDS = { lat: 10.85124, lon: 106.62669 };
 const SHIPPING_RATE_PER_KM = 20000;
 const USER_AGENT = "XeDoStudio/1.0 shipping-estimator";
+const QR_BANK_BIN = process.env.QR_BANK_BIN || "970407";
+const QR_ACCOUNT_NO = process.env.QR_ACCOUNT_NO || "7777368888";
+const QR_ACCOUNT_NAME = process.env.QR_ACCOUNT_NAME || "NGUYEN VAN THANH HUNG";
+const QR_BANK_NAME = process.env.QR_BANK_NAME || "Techcombank";
+const QR_TEMPLATE = process.env.QR_TEMPLATE || "compact2";
 
 async function populateCart(cartId) {
   return Cart.findById(cartId)
@@ -59,6 +64,30 @@ function buildCartSummary(cart, promotion = null, fulfillmentMethod = "pickup", 
     shippingRatePerKm: SHIPPING_RATE_PER_KM,
     storeAddress: STORE_ADDRESS,
     total
+  };
+}
+
+function getQrPaymentConfig(amount = 0, transferNote = "THANH TOAN XE DO") {
+  if (!QR_BANK_BIN || !QR_ACCOUNT_NO || !QR_ACCOUNT_NAME) {
+    return {
+      supported: false
+    };
+  }
+
+  const normalizedAmount = Math.max(Math.round(Number(amount || 0)), 0);
+  const encodedNote = encodeURIComponent(String(transferNote || "THANH TOAN XE DO"));
+  const encodedAccountName = encodeURIComponent(QR_ACCOUNT_NAME);
+
+  return {
+    supported: true,
+    bankName: QR_BANK_NAME,
+    bankBin: QR_BANK_BIN,
+    accountNumber: QR_ACCOUNT_NO,
+    accountName: QR_ACCOUNT_NAME,
+    template: QR_TEMPLATE,
+    transferNote,
+    staticImageUrl: "/qr-payment.png",
+    qrImageUrl: `https://img.vietqr.io/image/${QR_BANK_BIN}-${QR_ACCOUNT_NO}-${QR_TEMPLATE}.png?amount=${normalizedAmount}&addInfo=${encodedNote}&accountName=${encodedAccountName}`
   };
 }
 
@@ -224,7 +253,8 @@ router.get("/dashboard", async (req, res, next) => {
       orders,
       reviews,
       storeAddress: STORE_ADDRESS,
-      shippingRatePerKm: SHIPPING_RATE_PER_KM
+      shippingRatePerKm: SHIPPING_RATE_PER_KM,
+      qrPayment: getQrPaymentConfig()
     });
   } catch (error) {
     next(error);
@@ -263,7 +293,8 @@ router.get("/cart", async (req, res, next) => {
       cart,
       summary: buildCartSummary(cart, promotion, fulfillmentMethod, distanceKm),
       storeAddress: STORE_ADDRESS,
-      shippingRatePerKm: SHIPPING_RATE_PER_KM
+      shippingRatePerKm: SHIPPING_RATE_PER_KM,
+      qrPayment: getQrPaymentConfig()
     });
   } catch (error) {
     next(error);
@@ -526,7 +557,8 @@ router.post("/orders", async (req, res, next) => {
       message: "Dat hang thanh cong",
       order: populatedOrder,
       invoice: populatedInvoice,
-      summary
+      summary,
+      qrPayment: getQrPaymentConfig(summary.total, invoice.invoiceNumber)
     });
   } catch (error) {
     next(error);

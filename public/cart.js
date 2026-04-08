@@ -3,10 +3,13 @@ const auth = {
   user: JSON.parse(localStorage.getItem("user") || "null"),
   promotionCode: "",
   fulfillmentMethod: "pickup",
+  paymentMethod: "store_payment",
   distanceKm: 0,
   shippingAddress: "",
   estimateTimeoutId: null,
-  selectedPoint: null
+  selectedPoint: null,
+  qrPayment: null,
+  currentSummary: null
 };
 
 const elements = {
@@ -25,7 +28,15 @@ const elements = {
   mapHint: document.getElementById("map-hint"),
   shippingFeedback: document.getElementById("shipping-feedback"),
   mapSelectedAddress: document.getElementById("map-selected-address"),
-  mapDistanceValue: document.getElementById("map-distance-value")
+  mapDistanceValue: document.getElementById("map-distance-value"),
+  qrPaymentCard: document.getElementById("qr-payment-card"),
+  qrPaymentCaption: document.getElementById("qr-payment-caption"),
+  qrPaymentTotal: document.getElementById("qr-payment-total"),
+  qrPaymentImage: document.getElementById("qr-payment-image"),
+  qrBankName: document.getElementById("qr-bank-name"),
+  qrAccountName: document.getElementById("qr-account-name"),
+  qrAccountNumber: document.getElementById("qr-account-number"),
+  qrTransferNote: document.getElementById("qr-transfer-note")
 };
 
 let deliveryMap = null;
@@ -78,6 +89,57 @@ function setShippingFeedback(message = "", type = "") {
 function renderMapSelectionInfo(address = "", distanceKm = 0) {
   elements.mapSelectedAddress.textContent = address || "Chua chon diem giao";
   elements.mapDistanceValue.textContent = distanceKm > 0 ? `${distanceKm} km` : "0 km";
+}
+
+function buildQrImageUrl(qrPayment, amount, transferNote) {
+  if (qrPayment?.staticImageUrl) {
+    return qrPayment.staticImageUrl;
+  }
+
+  if (!qrPayment?.supported || !qrPayment.bankBin || !qrPayment.accountNumber) {
+    return "";
+  }
+
+  const normalizedAmount = Math.max(Math.round(Number(amount || 0)), 0);
+  const encodedNote = encodeURIComponent(transferNote || "THANH TOAN XE DO");
+  const encodedAccountName = encodeURIComponent(qrPayment.accountName || "");
+
+  return `https://img.vietqr.io/image/${qrPayment.bankBin}-${qrPayment.accountNumber}-${qrPayment.template || "compact2"}.png?amount=${normalizedAmount}&addInfo=${encodedNote}&accountName=${encodedAccountName}`;
+}
+
+function renderQrPayment(summary) {
+  const showQr = auth.paymentMethod === "bank_transfer";
+  elements.qrPaymentCard.classList.toggle("hidden", !showQr);
+
+  if (!showQr) {
+    return;
+  }
+
+  const total = Math.max(Math.round(Number(summary?.total || 0)), 0);
+  const transferNote = summary?.invoiceNumber || auth.qrPayment?.transferNote || "THANH TOAN XE DO";
+
+  if (!auth.qrPayment?.supported) {
+    elements.qrPaymentCaption.textContent = "Chua cau hinh tai khoan nhan tien cho thanh toan QR.";
+    elements.qrPaymentImage.removeAttribute("src");
+    elements.qrPaymentImage.alt = "Chua cau hinh QR";
+    elements.qrBankName.textContent = "Chua cau hinh";
+    elements.qrAccountName.textContent = "Chua cau hinh";
+    elements.qrAccountNumber.textContent = "Chua cau hinh";
+    elements.qrTransferNote.textContent = transferNote;
+    elements.qrPaymentTotal.textContent = formatCurrency(total);
+    return;
+  }
+
+  elements.qrPaymentCaption.textContent = auth.qrPayment.staticImageUrl
+    ? "Dang dung anh QR goc de quet on dinh. Vui long nhap so tien theo tong thanh toan ben canh."
+    : "Quet ma se tu dong co san so tien can thanh toan.";
+  elements.qrPaymentImage.src = buildQrImageUrl(auth.qrPayment, total, transferNote);
+  elements.qrPaymentImage.alt = `Ma QR thanh toan ${formatCurrency(total)}`;
+  elements.qrBankName.textContent = auth.qrPayment.bankName || "Ngan hang";
+  elements.qrAccountName.textContent = auth.qrPayment.accountName || "Dang cap nhat";
+  elements.qrAccountNumber.textContent = auth.qrPayment.accountNumber || "Dang cap nhat";
+  elements.qrTransferNote.textContent = transferNote;
+  elements.qrPaymentTotal.textContent = formatCurrency(total);
 }
 
 function getSelectedValue(name) {
@@ -152,6 +214,7 @@ function renderAccessories(accessories) {
 
 function renderCart(cart, summary) {
   const items = cart?.items || [];
+  auth.currentSummary = summary || null;
   elements.greeting.textContent = `Gio hang cua ${auth.user.fullName}`;
   renderCartCount(cart);
   elements.cartItems.innerHTML = items.length
@@ -197,6 +260,7 @@ function renderCart(cart, summary) {
     </div>
   `;
   elements.distanceKm.value = summary?.fulfillmentMethod === "delivery" && summary?.distanceKm ? `${summary.distanceKm} km` : "";
+  renderQrPayment(summary);
 }
 
 function initializeMap() {
@@ -255,6 +319,7 @@ async function loadPage() {
       api(`/api/user/cart?${query.toString()}`)
     ]);
 
+    auth.qrPayment = dashboard.qrPayment || cart.qrPayment || null;
     renderVehicles(vehicles);
     renderAccessories(accessories);
     renderCart(cart.cart, cart.summary);
@@ -369,6 +434,7 @@ async function applyPromotion() {
 async function checkout() {
   try {
     const paymentMethod = getSelectedValue("payment-method");
+    auth.paymentMethod = paymentMethod;
     const fulfillmentMethod = getSelectedValue("fulfillment-method");
 
     if (fulfillmentMethod === "delivery" && !auth.selectedPoint) {
@@ -400,11 +466,23 @@ async function checkout() {
     elements.deliveryNote.value = "";
     renderMapSelectionInfo("", 0);
     elements.mapHint.textContent = "Bam vao ban do de chon diem giao, web se tu tinh quang duong va phi ship.";
+    if (data.qrPayment?.supported && paymentMethod === "bank_transfer") {
+      auth.qrPayment = data.qrPayment;
+      renderQrPayment({
+        ...data.summary,
+        invoiceNumber: data.invoice?.invoiceNumber
+      });
+    }
     alert(`${data.message}. Tong thanh toan: ${formatCurrency(data.summary.total)}`);
-    await loadPage();
+    window.location.href = "/";
   } catch (error) {
     alert(error.message);
   }
+}
+
+function handlePaymentMethodChange() {
+  auth.paymentMethod = getSelectedValue("payment-method") || "store_payment";
+  renderQrPayment(auth.currentSummary);
 }
 
 function handleFulfillmentChange() {
@@ -420,10 +498,14 @@ function handleFulfillmentChange() {
 }
 
 if (requireAuth()) {
+  auth.paymentMethod = getSelectedValue("payment-method") || "store_payment";
   document.getElementById("logout-btn").addEventListener("click", logout);
   document.getElementById("apply-promotion-btn").addEventListener("click", applyPromotion);
   document.getElementById("checkout-btn").addEventListener("click", checkout);
   elements.useMapSelection.addEventListener("click", applyMapSelection);
+  document.querySelectorAll('input[name="payment-method"]').forEach((input) => {
+    input.addEventListener("change", handlePaymentMethodChange);
+  });
   document.querySelectorAll('input[name="fulfillment-method"]').forEach((input) => {
     input.addEventListener("change", handleFulfillmentChange);
   });

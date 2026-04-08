@@ -8,6 +8,7 @@ Web ban xe do dung Node.js, Express, Mongoose va frontend tinh.
 - Phan quyen `admin` va `user`
 - Trang chu hien thi xe noi bat, thuong hieu, danh muc, khuyen mai
 - Trang rieng cho `user`: xem dashboard, dat hang tu gio
+- Thanh toan co 2 lua chon: `Tien mat` hoac `Giao dich ma QR`, ma QR tu dong nhung tong tien
 - Trang rieng cho `admin`: xem dashboard, tao khuyen mai
 - Su dung 8 model MongoDB:
   - `User`
@@ -30,6 +31,11 @@ PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/xe_do_shop
 JWT_SECRET=super_secret_key
 GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
+QR_BANK_BIN=970407
+QR_BANK_NAME=Techcombank
+QR_ACCOUNT_NO=7777368888
+QR_ACCOUNT_NAME=NGUYEN VAN THANH HUNG
+QR_TEMPLATE=compact2
 ```
 
 4. Trong MongoDB Compass, connect bang:

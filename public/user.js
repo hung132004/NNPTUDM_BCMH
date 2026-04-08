@@ -148,7 +148,7 @@ function renderOrders(orders) {
                   return `${resource.name} x${item.quantity}`;
                 })
                 .join(", ")}</p>
-              <p>Thanh toan: ${order.paymentMethod === "bank_transfer" ? "Chuyen khoan ngan hang" : "Thanh toan tai cua hang"}</p>
+              <p>Thanh toan: ${order.paymentMethod === "bank_transfer" ? "Giao dich ma QR" : "Tien mat"}</p>
               <p>Nhan hang: ${order.fulfillmentMethod === "delivery" ? "Ship tan noi" : "Nhan tai cua hang"}</p>
               <p>Tong thanh toan: ${formatCurrency(order.totalAmount)}</p>
               <p>Dia chi giao: ${order.shippingAddress}</p>
