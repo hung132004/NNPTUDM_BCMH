@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XeDo Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav nav-shell container">
+        <a class="brand-mark" href="/">XeDo Studio</a>
+        <div id="guest-actions" class="nav-actions">
+          <button id="open-login" class="ghost-btn">Dang nhap</button>
+          <button id="open-register" class="primary-btn">Dang ky</button>
+        </div>
+        <div id="auth-actions" class="nav-actions hidden">
+          <span id="welcome-text" class="welcome-text"></span>
+          <a id="cart-link" class="ghost-btn link-btn hidden" href="/cart.html">
+            Gio hang
+            <span id="cart-count" class="count-badge hidden">0</span>
+          </a>
+          <a id="dashboard-link" class="ghost-btn link-btn" href="/user.html">Tai khoan</a>
+          <button id="logout-btn" class="ghost-btn">Dang xuat</button>
+        </div>
+      </nav>
+      <div class="hero-content container">
+        <div class="hero-copy-block">
+          <p class="eyebrow">Custom Motorbike Marketplace</p>
+          <h1>Chon mau xe do hop gu, dat nhanh, nhan xe dung hen.</h1>
+          <p class="hero-copy">
+            Tong hop cac phien ban street, underbone va performance da len do theo nhieu phong cach khac nhau.
+          </p>
+          <div class="hero-cta">
+            <button id="scroll-products" class="primary-btn">Xem san pham</button>
+            <a id="hero-dashboard-link" class="ghost-btn link-btn hidden" href="/user.html">Vao tai khoan</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="stat-box">
+            <span>Uy tin</span>
+            <strong>Thong tin xe ro rang, hinh anh that, ho tro xem xe truoc khi chot don</strong>
+          </div>
+          <div class="stat-box">
+            <span>Ho tro</span>
+            <strong>Tu van len bai, phu kien, van chuyen tinh va huong dan bao duong sau mua</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section container section-surface">
+        <div class="section-heading">
+          <p class="eyebrow">Danh muc</p>
+          <h2>Thuong hieu va dong xe</h2>
+        </div>
+        <div id="brand-list" class="pill-grid"></div>
+        <div id="category-list" class="pill-grid secondary"></div>
+      </section>
+
+      <section id="products" class="section container section-surface">
+        <div class="section-heading">
+          <p class="eyebrow">Xe noi bat</p>
+          <h2>San pham dang ban</h2>
+        </div>
+        <form id="search-form" class="search-bar">
+          <input id="search-input" type="text" placeholder="Tim xe theo ten, vi du: Winner, Exciter..." />
+          <button class="primary-btn" type="submit">Tim kiem</button>
+          <button id="clear-search" class="ghost-btn" type="button">Xoa</button>
+        </form>
+        <div id="vehicle-list" class="card-grid"></div>
+      </section>
+
+      <section class="section container section-surface">
+        <div class="section-heading">
+          <p class="eyebrow">Phu kien</p>
+          <h2>Phu kien dang san co</h2>
+        </div>
+        <div id="accessory-list" class="card-grid"></div>
+      </section>
+
+      <section class="section container section-surface">
+        <div class="section-heading">
+          <p class="eyebrow">Khuyen mai</p>
+          <h2>Ma giam gia dang hoat dong</h2>
+        </div>
+        <div id="promotion-list" class="promo-grid"></div>
+      </section>
+    </main>
+
+    <section id="auth-modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-switch">
+          <button id="tab-login" class="tab-btn active">Dang nhap</button>
+          <button id="tab-register" class="tab-btn">Dang ky</button>
+        </div>
+
+        <div id="auth-error" class="form-message hidden"></div>
+
+        <form id="login-form" class="auth-form">
+          <input name="username" type="text" placeholder="Ten dang nhap" required />
+          <input name="password" type="password" placeholder="Mat khau" required />
+          <button class="primary-btn" type="submit">Dang nhap</button>
+        </form>
+        <div class="oauth-box">
+          <p class="oauth-label">Hoac tiep tuc voi Google</p>
+          <div id="google-login-button"></div>
+        </div>
+
+        <form id="register-form" class="auth-form hidden">
+          <input name="fullName" type="text" placeholder="Ho ten" required />
+          <input name="username" type="text" placeholder="Ten dang nhap" required />
+          <input name="email" type="email" placeholder="Email (khong bat buoc)" />
+          <input name="password" type="password" placeholder="Mat khau" required />
+          <input name="phone" type="text" placeholder="So dien thoai" />
+          <input name="address" type="text" placeholder="Dia chi" />
+          <button class="primary-btn" type="submit">Tao tai khoan</button>
+        </form>
+        <div id="google-register-box" class="oauth-box hidden">
+          <p class="oauth-label">Hoac dang ky nhanh voi Google</p>
+          <div id="google-register-button"></div>
+        </div>
+
+        <button id="close-modal" class="close-btn" type="button">Dong</button>
+      </div>
+    </section>
+
+    <script src="/main.js"></script>
+  </body>
+</html>
