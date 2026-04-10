@@ -54,7 +54,7 @@ async function api(path, options = {}) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Co loi xay ra");
+    throw new Error(data.message || "Có lỗi xảy ra");
   }
 
   return data;
@@ -88,12 +88,12 @@ function formatDate(value) {
 }
 
 function renderStats(data) {
-  elements.greeting.textContent = `Xin chao, ${auth.user.fullName}`;
+  elements.greeting.textContent = `Xin chào, ${auth.user.fullName}`;
   elements.stats.innerHTML = `
-    <div class="mini-card"><strong>Khach hang</strong><p>${data.stats.totalUsers}</p></div>
-    <div class="mini-card"><strong>San pham</strong><p>${data.stats.totalVehicles}</p></div>
-    <div class="mini-card"><strong>Phu kien</strong><p>${data.stats.totalAccessories || 0}</p></div>
-    <div class="mini-card"><strong>Don hang</strong><p>${data.stats.totalOrders}</p></div>
+    <div class="mini-card"><strong>Khách hàng</strong><p>${data.stats.totalUsers}</p></div>
+    <div class="mini-card"><strong>Sản phẩm</strong><p>${data.stats.totalVehicles}</p></div>
+    <div class="mini-card"><strong>Phụ kiện</strong><p>${data.stats.totalAccessories || 0}</p></div>
+    <div class="mini-card"><strong>Đơn hàng</strong><p>${data.stats.totalOrders}</p></div>
     <div class="mini-card"><strong>Review</strong><p>${data.stats.totalReviews}</p></div>
     <div class="mini-card"><strong>Doanh thu</strong><p>${formatCurrency(data.stats.revenue)}</p></div>
   `;
@@ -115,8 +115,8 @@ function renderVehicles(vehicles) {
             <strong>${formatCurrency(vehicle.salePrice || vehicle.price)}</strong>
           </div>
           <div class="inline-actions">
-            <button class="ghost-btn small-btn" onclick="editVehicle('${vehicle._id}')">Sua</button>
-            <button class="ghost-btn small-btn" onclick="deleteVehicle('${vehicle._id}')">Xoa</button>
+            <button class="ghost-btn small-btn" onclick="editVehicle('${vehicle._id}')">Sửa</button>
+            <button class="ghost-btn small-btn" onclick="deleteVehicle('${vehicle._id}')">Xóa</button>
           </div>
         </article>
       `
@@ -132,7 +132,7 @@ function renderThumbnailPreview(src) {
   }
 
   elements.thumbnailPreview.innerHTML = `
-    <strong>Anh hien tai</strong>
+    <strong>Ảnh hiện tại</strong>
     <img class="preview-image" src="${src}" alt="Preview" />
   `;
   elements.thumbnailPreview.classList.remove("hidden");
@@ -146,7 +146,7 @@ function renderUsers(users) {
         <article class="mini-card">
           <strong>${user.fullName}</strong>
           <p>${user.username || user.email}</p>
-          <p>${user.phone || "Chua co so dien thoai"} / ${user.address || "Chua co dia chi"}</p>
+          <p>${user.phone || "Chưa có số điện thoại"} / ${user.address || "Chưa có địa chỉ"}</p>
         </article>
       `
     )
@@ -165,16 +165,16 @@ function renderReviews(reviews) {
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co review.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có đánh giá.</p></div>`;
 }
 
 function getStatusLabel(status) {
   const labels = {
-    pending: "Cho xac nhan",
-    confirmed: "Da xac nhan",
-    shipping: "Dang giao",
-    completed: "Hoan thanh",
-    cancelled: "Da huy"
+    pending: "Chờ xác nhận",
+    confirmed: "Đã xác nhận",
+    shipping: "Đang giao",
+    completed: "Hoàn thành",
+    cancelled: "Đã hủy"
   };
 
   return labels[status] || status;
@@ -182,11 +182,11 @@ function getStatusLabel(status) {
 
 function getWarrantyStatusLabel(status) {
   const labels = {
-    active: "Dang hieu luc",
-    claimed: "Da tiep nhan",
-    resolved: "Da xu ly",
-    rejected: "Tu choi",
-    expired: "Het han"
+    active: "Đang hiệu lực",
+    claimed: "Đã tiếp nhận",
+    resolved: "Đã xử lý",
+    rejected: "Từ chối",
+    expired: "Hết hạn"
   };
 
   return labels[status] || status;
@@ -198,28 +198,28 @@ function renderOrders(orders) {
         .map(
           (order) => `
             <article class="mini-card">
-              <strong>Don ${order._id.slice(-6).toUpperCase()} / ${order.user?.fullName || "Khach hang"}</strong>
+              <strong>Đơn ${order._id.slice(-6).toUpperCase()} / ${order.user?.fullName || "Khách hàng"}</strong>
               <p><span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
               <p>${order.items
                 .map((item) => {
                   const resource = item.itemType === "accessory" ? item.accessory : item.vehicle;
-                  return `${resource?.name || "San pham"} x${item.quantity}`;
+                  return `${resource?.name || "Sản phẩm"} x${item.quantity}`;
                 })
                 .join(", ")}</p>
-              <p>${order.paymentMethod === "bank_transfer" ? "Giao dich ma QR" : "Tien mat"}</p>
-              <p>${order.fulfillmentMethod === "delivery" ? `Ship tan noi / ${order.distanceKm || 0} km` : "Nhan tai cua hang"}</p>
+              <p>${order.paymentMethod === "bank_transfer" ? "Giao dịch mã QR" : "Tiền mặt"}</p>
+              <p>${order.fulfillmentMethod === "delivery" ? `Giao tận nơi / ${order.distanceKm || 0} km` : "Nhận tại cửa hàng"}</p>
               <p>${formatCurrency(order.totalAmount)}</p>
               <p>${order.shippingAddress}</p>
               <div class="inline-actions">
-                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'confirmed')">Xac nhan</button>
-                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'shipping')">Dang giao</button>
-                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'completed')">Hoan thanh</button>
+                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'confirmed')">Xác nhận</button>
+                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'shipping')">Đang giao</button>
+                <button class="ghost-btn small-btn" onclick="updateOrderStatus('${order._id}', 'completed')">Hoàn thành</button>
               </div>
             </article>
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co don hang can xac nhan.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có đơn hàng cần xác nhận.</p></div>`;
 }
 
 function getWarrantyTargetLabel(warranty) {
@@ -231,7 +231,7 @@ function getWarrantyTargetLabel(warranty) {
     return warranty.vehicle?.name || "Xe";
   }
 
-  return warranty.accessory?.name || "Phu kien";
+  return warranty.accessory?.name || "Phụ kiện";
 }
 
 function renderWarranties(warranties) {
@@ -241,24 +241,24 @@ function renderWarranties(warranties) {
           (warranty) => `
             <article class="mini-card">
               <div class="list-card-header">
-                <strong>${warranty.user?.fullName || "Khach hang"} - ${getWarrantyTargetLabel(warranty)}</strong>
+                <strong>${warranty.user?.fullName || "Khách hàng"} - ${getWarrantyTargetLabel(warranty)}</strong>
                 <span class="status-badge status-${warranty.status}">${getWarrantyStatusLabel(warranty.status)}</span>
               </div>
-              <p>Loai: ${warranty.itemType} / ${warranty.warrantyType || "standard"}</p>
-              <p>Mo ta loi: ${warranty.issueDescription || "Chua co mo ta"}</p>
-              <p>Bat dau: ${formatDate(warranty.startDate)} / Het han: ${formatDate(warranty.endDate)}</p>
-              <p>Ghi chu xu ly: ${warranty.resolutionNotes || "Chua co"}</p>
+              <p>Loại: ${warranty.itemType} / ${warranty.warrantyType || "standard"}</p>
+              <p>Mô tả lỗi: ${warranty.issueDescription || "Chưa có mô tả"}</p>
+              <p>Bắt đầu: ${formatDate(warranty.startDate)} / Hết hạn: ${formatDate(warranty.endDate)}</p>
+              <p>Ghi chú xử lý: ${warranty.resolutionNotes || "Chưa có"}</p>
               <div class="inline-actions">
-                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'claimed')">Tiep nhan</button>
-                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'resolved')">Da xu ly</button>
-                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'rejected')">Tu choi</button>
-                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'expired')">Het han</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'claimed')">Tiếp nhận</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'resolved')">Đã xử lý</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'rejected')">Từ chối</button>
+                <button class="ghost-btn small-btn" onclick="updateWarrantyStatus('${warranty._id}', 'expired')">Hết hạn</button>
               </div>
             </article>
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co yeu cau bao hanh nao.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có yêu cầu bảo hành nào.</p></div>`;
 }
 
 function renderNotifications(list) {
@@ -276,7 +276,7 @@ function renderNotifications(list) {
           </article>
         `)
         .join("")
-    : `<div class="mini-card"><p>Chua co thong bao nao.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có thông báo nào.</p></div>`;
 }
 
 function updateNotificationBadgeAdmin(count) {
@@ -321,7 +321,7 @@ function addNotificationAdmin(notification) {
   notifications.unshift(notification);
   renderNotifications(notifications);
   updateNotificationBadgeAdmin(notifications.filter((item) => !item.isRead).length);
-  showToast(notification.title || "Thong bao moi");
+  showToast(notification.title || "Thông báo mới");
 }
 
 function switchAdminTab(tabName) {
@@ -408,9 +408,9 @@ window.deleteVehicle = async function deleteVehicle(id) {
 window.updateWarrantyStatus = async function updateWarrantyStatus(id, status) {
   const resolutionNotes =
     status === "resolved"
-      ? prompt("Nhap ghi chu xu ly bao hanh:", "Da xu ly thanh cong") || ""
+      ? prompt("Nhập ghi chú xử lý bảo hành:", "Đã xử lý thành công") || ""
       : status === "rejected"
-        ? prompt("Nhap ly do tu choi:", "Khong du dieu kien bao hanh") || ""
+        ? prompt("Nhập lý do từ chối:", "Không đủ điều kiện bảo hành") || ""
         : "";
 
   try {

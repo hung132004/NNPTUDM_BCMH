@@ -20,7 +20,7 @@ async function api(path, options = {}) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Co loi xay ra");
+    throw new Error(data.message || "Có lỗi xảy ra");
   }
 
   return data;
@@ -48,15 +48,15 @@ function renderProduct(vehicle) {
         <span class="old-price">${formatCurrency(vehicle.price)}</span>
       </div>
       <div class="spec-grid">
-        <div class="mini-card"><strong>Dong co</strong><p>${vehicle.engine || "Dang cap nhat"}</p></div>
-        <div class="mini-card"><strong>Ton kho</strong><p>${vehicle.stock}</p></div>
+        <div class="mini-card"><strong>Động cơ</strong><p>${vehicle.engine || "Đang cập nhật"}</p></div>
+        <div class="mini-card"><strong>Tồn kho</strong><p>${vehicle.stock}</p></div>
       </div>
       <div class="spec-grid">
         ${(vehicle.specs || []).map((spec) => `<div class="mini-card"><p>${spec}</p></div>`).join("")}
       </div>
       <div class="hero-cta">
-        <button class="primary-btn" onclick="addToCart('${vehicle._id}')">Them vao gio</button>
-        <a class="ghost-btn link-btn" href="/#products">Tiep tuc mua sam</a>
+        <button class="primary-btn" onclick="addToCart('${vehicle._id}')">Thêm vào giỏ</button>
+        <a class="ghost-btn link-btn" href="/#products">Tiếp tục mua sắm</a>
       </div>
     </article>
   `;
@@ -74,12 +74,12 @@ function renderReviews(reviews) {
           `
         )
         .join("")
-    : `<div class="mini-card"><p>San pham nay chua co danh gia.</p></div>`;
+    : `<div class="mini-card"><p>Sản phẩm này chưa có đánh giá.</p></div>`;
 }
 
 window.addToCart = async function addToCart(vehicleId) {
   if (!state.token) {
-    alert("Ban can dang nhap truoc khi them gio hang");
+    alert("Bạn cần đăng nhập trước khi thêm giỏ hàng");
     window.location.href = "/";
     return;
   }
@@ -89,7 +89,7 @@ window.addToCart = async function addToCart(vehicleId) {
       method: "POST",
       body: JSON.stringify({ vehicleId, quantity: 1 })
     });
-    alert("Da them vao gio hang");
+    alert("Đã thêm vào giỏ hàng");
   } catch (error) {
     alert(error.message);
   }
@@ -98,7 +98,7 @@ window.addToCart = async function addToCart(vehicleId) {
 async function loadPage() {
   const slug = new URLSearchParams(window.location.search).get("slug");
   if (!slug) {
-    elements.detail.innerHTML = `<div class="mini-card"><p>Khong tim thay san pham.</p></div>`;
+    elements.detail.innerHTML = `<div class="mini-card"><p>Không tìm thấy sản phẩm.</p></div>`;
     return;
   }
 

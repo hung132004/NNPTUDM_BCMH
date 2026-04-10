@@ -67,7 +67,7 @@ async function api(path, options = {}) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Co loi xay ra");
+    throw new Error(data.message || "Có lỗi xảy ra");
   }
 
   return data;
@@ -87,7 +87,7 @@ function setShippingFeedback(message = "", type = "") {
 }
 
 function renderMapSelectionInfo(address = "", distanceKm = 0) {
-  elements.mapSelectedAddress.textContent = address || "Chua chon diem giao";
+  elements.mapSelectedAddress.textContent = address || "Chưa chọn điểm giao";
   elements.mapDistanceValue.textContent = distanceKm > 0 ? `${distanceKm} km` : "0 km";
 }
 
@@ -119,25 +119,25 @@ function renderQrPayment(summary) {
   const transferNote = summary?.invoiceNumber || auth.qrPayment?.transferNote || "THANH TOAN XE DO";
 
   if (!auth.qrPayment?.supported) {
-    elements.qrPaymentCaption.textContent = "Chua cau hinh tai khoan nhan tien cho thanh toan QR.";
+    elements.qrPaymentCaption.textContent = "Chưa cấu hình tài khoản nhận tiền cho thanh toán QR.";
     elements.qrPaymentImage.removeAttribute("src");
-    elements.qrPaymentImage.alt = "Chua cau hinh QR";
-    elements.qrBankName.textContent = "Chua cau hinh";
-    elements.qrAccountName.textContent = "Chua cau hinh";
-    elements.qrAccountNumber.textContent = "Chua cau hinh";
+    elements.qrPaymentImage.alt = "Chưa cấu hình QR";
+    elements.qrBankName.textContent = "Chưa cấu hình";
+    elements.qrAccountName.textContent = "Chưa cấu hình";
+    elements.qrAccountNumber.textContent = "Chưa cấu hình";
     elements.qrTransferNote.textContent = transferNote;
     elements.qrPaymentTotal.textContent = formatCurrency(total);
     return;
   }
 
   elements.qrPaymentCaption.textContent = auth.qrPayment.staticImageUrl
-    ? "Dang dung anh QR goc de quet on dinh. Vui long nhap so tien theo tong thanh toan ben canh."
-    : "Quet ma se tu dong co san so tien can thanh toan.";
+    ? "Đang dùng ảnh QR gốc để quét ổn định. Vui lòng nhập số tiền theo tổng thanh toán bên cạnh."
+    : "Quét mã sẽ tự động có sẵn số tiền cần thanh toán.";
   elements.qrPaymentImage.src = buildQrImageUrl(auth.qrPayment, total, transferNote);
-  elements.qrPaymentImage.alt = `Ma QR thanh toan ${formatCurrency(total)}`;
-  elements.qrBankName.textContent = auth.qrPayment.bankName || "Ngan hang";
-  elements.qrAccountName.textContent = auth.qrPayment.accountName || "Dang cap nhat";
-  elements.qrAccountNumber.textContent = auth.qrPayment.accountNumber || "Dang cap nhat";
+  elements.qrPaymentImage.alt = `Mã QR thanh toán ${formatCurrency(total)}`;
+  elements.qrBankName.textContent = auth.qrPayment.bankName || "Ngân hàng";
+  elements.qrAccountName.textContent = auth.qrPayment.accountName || "Đang cập nhật";
+  elements.qrAccountNumber.textContent = auth.qrPayment.accountNumber || "Đang cập nhật";
   elements.qrTransferNote.textContent = transferNote;
   elements.qrPaymentTotal.textContent = formatCurrency(total);
 }
@@ -155,7 +155,7 @@ function getItemId(item) {
 }
 
 function getItemName(item) {
-  return getItemResource(item)?.name || "San pham";
+  return getItemResource(item)?.name || "Sản phẩm";
 }
 
 function getItemImage(item) {
@@ -164,10 +164,10 @@ function getItemImage(item) {
 
 function getItemMeta(item) {
   if (item.itemType === "accessory") {
-    return `Phu kien / ${item.accessory?.category || "Tong hop"}`;
+    return `Phụ kiện / ${item.accessory?.category || "Tổng hợp"}`;
   }
 
-  return `${item.vehicle?.brand?.name || ""} / ${item.vehicle?.category?.name || ""} / ${item.vehicle?.engine || "Dang cap nhat"}`;
+  return `${item.vehicle?.brand?.name || ""} / ${item.vehicle?.category?.name || ""} / ${item.vehicle?.engine || "Đang cập nhật"}`;
 }
 
 function renderCartCount(cart) {
@@ -184,10 +184,10 @@ function renderVehicles(vehicles) {
           <img class="thumb-sm" src="${vehicle.thumbnail}" alt="${vehicle.name}" />
           <div class="list-body">
             <h3><a href="/product.html?slug=${vehicle.slug}">${vehicle.name}</a></h3>
-            <p>${vehicle.brand.name} / ${vehicle.category.name} / ${vehicle.engine || "Dang cap nhat"}</p>
+            <p>${vehicle.brand.name} / ${vehicle.category.name} / ${vehicle.engine || "Đang cập nhật"}</p>
             <strong>${formatCurrency(vehicle.salePrice || vehicle.price)}</strong>
           </div>
-          <button class="primary-btn" onclick="addVehicleToCart('${vehicle._id}')">Them xe</button>
+          <button class="primary-btn" onclick="addVehicleToCart('${vehicle._id}')">Thêm xe</button>
         </article>
       `
     )
@@ -205,7 +205,7 @@ function renderAccessories(accessories) {
             <p>${accessory.category} / ${(accessory.compatibleVehicles || []).join(", ")}</p>
             <strong>${formatCurrency(accessory.salePrice || accessory.price)}</strong>
           </div>
-          <button class="primary-btn" onclick="addAccessoryToCart('${accessory._id}')">Them phu kien</button>
+          <button class="primary-btn" onclick="addAccessoryToCart('${accessory._id}')">Thêm phụ kiện</button>
         </article>
       `
     )
@@ -215,7 +215,7 @@ function renderAccessories(accessories) {
 function renderCart(cart, summary) {
   const items = cart?.items || [];
   auth.currentSummary = summary || null;
-  elements.greeting.textContent = `Gio hang cua ${auth.user.fullName}`;
+  elements.greeting.textContent = `Giỏ hàng của ${auth.user.fullName}`;
   renderCartCount(cart);
   elements.cartItems.innerHTML = items.length
     ? items
@@ -231,17 +231,17 @@ function renderCart(cart, summary) {
               <div class="inline-actions">
                 <button class="ghost-btn small-btn" onclick="updateCartItem('${getItemId(item)}', ${item.quantity - 1})">-</button>
                 <button class="ghost-btn small-btn" onclick="updateCartItem('${getItemId(item)}', ${item.quantity + 1})">+</button>
-                <button class="ghost-btn small-btn" onclick="removeCartItem('${getItemId(item)}')">Xoa</button>
+                <button class="ghost-btn small-btn" onclick="removeCartItem('${getItemId(item)}')">Xóa</button>
               </div>
             </article>
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Gio hang hien dang trong.</p></div>`;
+    : `<div class="mini-card"><p>Giỏ hàng hiện đang trống.</p></div>`;
 
   elements.cartSummary.innerHTML = `
     <div class="invoice-topline">
-      <span>Hoa don tam tinh</span>
+      <span>Hóa đơn tạm tính</span>
       <strong>${formatCurrency(summary?.total)}</strong>
     </div>
     <div class="invoice-rows">
@@ -254,8 +254,8 @@ function renderCart(cart, summary) {
       <strong>${formatCurrency(summary?.total)}</strong>
     </div>
     <div class="invoice-meta">
-      <p>${summary?.promotion ? `Ma ap dung: ${summary.promotion.code}` : "Chua ap ma giam gia"}</p>
-      <p>${summary?.fulfillmentMethod === "delivery" ? `Quang duong: ${summary.distanceKm} km x ${formatCurrency(summary.shippingRatePerKm)}/km` : "Nhan tai cua hang, khong tinh phi ship"}</p>
+      <p>${summary?.promotion ? `Mã áp dụng: ${summary.promotion.code}` : "Chưa áp mã giảm giá"}</p>
+      <p>${summary?.fulfillmentMethod === "delivery" ? `Quãng đường: ${summary.distanceKm} km x ${formatCurrency(summary.shippingRatePerKm)}/km` : "Nhận tại cửa hàng, không tính phí ship"}</p>
       <p>Dia chi cua hang: ${summary?.storeAddress || ""}</p>
     </div>
   `;
@@ -280,7 +280,7 @@ function initializeMap() {
   deliveryMap.on("click", (event) => {
     auth.selectedPoint = event.latlng;
     renderMapMarker(event.latlng.lat, event.latlng.lng);
-    elements.mapHint.textContent = "Da chon diem giao. Web dang cap nhat dia chi va phi ship tu ban do.";
+    elements.mapHint.textContent = "Đã chọn điểm giao. Web đang cập nhật địa chỉ và phí ship từ bản đồ.";
     applyMapSelection();
   });
 }
@@ -465,7 +465,7 @@ async function checkout() {
     elements.shippingAddress.value = "";
     elements.deliveryNote.value = "";
     renderMapSelectionInfo("", 0);
-    elements.mapHint.textContent = "Bam vao ban do de chon diem giao, web se tu tinh quang duong va phi ship.";
+    elements.mapHint.textContent = "Bấm vào bản đồ để chọn điểm giao, web sẽ tự tính quãng đường và phí ship.";
     if (data.qrPayment?.supported && paymentMethod === "bank_transfer") {
       auth.qrPayment = data.qrPayment;
       renderQrPayment({

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tai Khoan | XeDo Studio</title>
+    <title>Tài Khoản | XeDo Studio</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -11,77 +11,77 @@
       <section class="panel page-hero-panel">
         <div class="panel-head panel-head-wrap">
           <div>
-            <p class="eyebrow">Tai khoan</p>
-            <h1 id="user-greeting">Xin chao</h1>
+            <p class="eyebrow">Tài khoản</p>
+            <h1 id="user-greeting">Xin chào</h1>
           </div>
           <div class="nav-actions">
-            <a class="ghost-btn link-btn" href="/">Trang chu</a>
+            <a class="ghost-btn link-btn" href="/">Trang chủ</a>
             <a class="ghost-btn link-btn" href="/cart.html">
-              Gio hang
+              Giỏ hàng
               <span id="cart-count" class="count-badge hidden">0</span>
             </a>
             <button id="notification-toggle" class="ghost-btn link-btn">
-              Thong bao
+              Thông báo
               <span id="notification-count" class="count-badge hidden">0</span>
             </button>
-            <button id="logout-btn" class="ghost-btn">Dang xuat</button>
+            <button id="logout-btn" class="ghost-btn">Đăng xuất</button>
           </div>
         </div>
         <div id="user-profile" class="dashboard-content"></div>
       </section>
 
       <section class="account-tabs">
-        <button class="tab-btn active" data-tab-target="orders">Don hang da mua</button>
-        <button class="tab-btn" data-tab-target="reviews">Danh gia da gui</button>
-        <button class="tab-btn" data-tab-target="warranties">Bao hanh</button>
-        <button class="tab-btn" data-tab-target="notifications">Thong bao</button>
+        <button class="tab-btn active" data-tab-target="orders">Đơn hàng đã mua</button>
+        <button class="tab-btn" data-tab-target="reviews">Đánh giá đã gửi</button>
+        <button class="tab-btn" data-tab-target="warranties">Bảo hành</button>
+        <button class="tab-btn" data-tab-target="notifications">Thông báo</button>
       </section>
 
       <section id="notifications-panel" class="panel tab-panel hidden">
         <div class="panel-head panel-head-inline">
-          <h2>Thong bao</h2>
-          <button id="mark-all-read" class="ghost-btn small-btn">Danh dau da doc</button>
+          <h2>Thông báo</h2>
+          <button id="mark-all-read" class="ghost-btn small-btn">Đánh dấu đã đọc</button>
         </div>
         <div id="notifications-list" class="stack-list"></div>
       </section>
 
       <section id="orders-panel" class="panel tab-panel">
         <div class="panel-head">
-          <h2>Don hang da mua</h2>
+          <h2>Đơn hàng đã mua</h2>
         </div>
         <div id="user-orders" class="stack-list"></div>
       </section>
 
       <section id="reviews-panel" class="panel tab-panel hidden">
         <div class="panel-head">
-          <h2>Danh gia da gui</h2>
+          <h2>Đánh giá đã gửi</h2>
         </div>
         <form id="review-form" class="auth-form compact-form">
           <select name="vehicleId" id="review-vehicle" required></select>
-          <input name="rating" type="number" min="1" max="5" placeholder="So sao 1-5" required />
-          <input name="comment" type="text" placeholder="Noi dung danh gia" required />
-          <button type="submit" class="primary-btn">Gui danh gia</button>
+          <input name="rating" type="number" min="1" max="5" placeholder="Số sao 1-5" required />
+          <input name="comment" type="text" placeholder="Nội dung đánh giá" required />
+          <button type="submit" class="primary-btn">Gửi đánh giá</button>
         </form>
         <div id="user-reviews" class="stack-list"></div>
       </section>
 
       <section id="warranties-panel" class="panel tab-panel hidden">
         <div class="panel-head">
-          <h2>Yeu cau bao hanh</h2>
+          <h2>Yêu cầu bảo hành</h2>
         </div>
         <form id="warranty-form" class="auth-form compact-form">
           <select name="itemType" id="warranty-item-type" required>
-            <option value="vehicle">Bao hanh xe</option>
-            <option value="accessory">Bao hanh phu kien</option>
-            <option value="service">Bao hanh dich vu</option>
+            <option value="vehicle">Bảo hành xe</option>
+            <option value="accessory">Bảo hành phụ kiện</option>
+            <option value="service">Bảo hành dịch vụ</option>
           </select>
           <select name="orderId" id="warranty-order-select"></select>
           <select name="vehicleId" id="warranty-vehicle-select"></select>
           <select name="accessoryId" id="warranty-accessory-select" class="hidden"></select>
           <select name="serviceId" id="warranty-service-select" class="hidden"></select>
-          <input name="warrantyType" type="text" placeholder="Loai bao hanh (mac dinh: standard)" />
-          <textarea name="issueDescription" rows="4" placeholder="Mo ta loi can bao hanh" required></textarea>
-          <button type="submit" class="primary-btn">Gui yeu cau bao hanh</button>
+          <input name="warrantyType" type="text" placeholder="Loại bảo hành (mặc định: standard)" />
+          <textarea name="issueDescription" rows="4" placeholder="Mô tả lỗi cần bảo hành" required></textarea>
+          <button type="submit" class="primary-btn">Gửi yêu cầu bảo hành</button>
         </form>
         <div id="user-warranties" class="stack-list"></div>
       </section>

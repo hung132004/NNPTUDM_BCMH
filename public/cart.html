@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gio Hang | XeDo Studio</title>
+    <title>Giỏ Hàng | XeDo Studio</title>
     <link rel="stylesheet" href="/styles.css" />
     <link
       rel="stylesheet"
@@ -17,17 +17,17 @@
       <section class="panel page-hero-panel">
         <div class="panel-head panel-head-wrap">
           <div>
-            <p class="eyebrow">Mua hang</p>
-            <h1 id="cart-greeting">Gio hang cua ban</h1>
+            <p class="eyebrow">Mua hàng</p>
+            <h1 id="cart-greeting">Giỏ hàng của bạn</h1>
           </div>
           <div class="nav-actions">
-            <a class="ghost-btn link-btn" href="/">Trang chu</a>
-            <a class="ghost-btn link-btn" href="/user.html">Tai khoan</a>
+            <a class="ghost-btn link-btn" href="/">Trang chủ</a>
+            <a class="ghost-btn link-btn" href="/user.html">Tài khoản</a>
             <span class="ghost-btn link-btn">
-              Gio hang
+              Giỏ hàng
               <span id="cart-count" class="count-badge hidden">0</span>
             </span>
-            <button id="logout-btn" class="ghost-btn">Dang xuat</button>
+            <button id="logout-btn" class="ghost-btn">Đăng xuất</button>
           </div>
         </div>
       </section>
@@ -35,87 +35,87 @@
       <section class="section-grid cart-layout">
         <div class="panel">
           <div class="panel-head">
-            <h2>San pham dang ban</h2>
+            <h2>Sản phẩm đang bán</h2>
           </div>
           <div id="cart-page-vehicles" class="stack-list"></div>
           <div class="panel-head panel-head-spaced">
-            <h2>Phu kien de mua kem</h2>
+            <h2>Phụ kiện để mua kèm</h2>
           </div>
           <div id="cart-page-accessories" class="stack-list"></div>
         </div>
 
         <div class="panel cart-panel">
           <div class="panel-head">
-            <h2>Gio hang va hoa don</h2>
+            <h2>Giỏ hàng và hóa đơn</h2>
           </div>
           <div class="order-tools">
-            <input id="promotion-code" type="text" placeholder="Nhap ma giam gia" />
-            <button id="apply-promotion-btn" class="ghost-btn">Ap ma</button>
+            <input id="promotion-code" type="text" placeholder="Nhập mã giảm giá" />
+            <button id="apply-promotion-btn" class="ghost-btn">Áp mã</button>
           </div>
           <div id="cart-page-items" class="stack-list"></div>
           <div id="cart-page-summary" class="invoice-card"></div>
           <div class="checkout-grid">
             <div class="mini-card checkout-card">
-              <strong>Hinh thuc thanh toan</strong>
-              <label><input type="radio" name="payment-method" value="store_payment" checked /> Tien mat</label>
-              <label><input type="radio" name="payment-method" value="bank_transfer" /> Giao dich ma QR</label>
+              <strong>Hình thức thanh toán</strong>
+              <label><input type="radio" name="payment-method" value="store_payment" checked /> Tiền mặt</label>
+              <label><input type="radio" name="payment-method" value="bank_transfer" /> Giao dịch mã QR</label>
             </div>
             <div class="mini-card checkout-card">
-              <strong>Hinh thuc nhan hang</strong>
-              <label><input type="radio" name="fulfillment-method" value="pickup" checked /> Nhan tai cua hang</label>
-              <label><input type="radio" name="fulfillment-method" value="delivery" /> Ship tan noi</label>
+              <strong>Hình thức nhận hàng</strong>
+              <label><input type="radio" name="fulfillment-method" value="pickup" checked /> Nhận tại cửa hàng</label>
+              <label><input type="radio" name="fulfillment-method" value="delivery" /> Giao tận nơi</label>
               <p id="store-address-note"></p>
             </div>
           </div>
           <div id="qr-payment-card" class="mini-card qr-payment-card hidden">
             <div class="qr-payment-head">
               <div>
-                <strong>Quet ma de thanh toan</strong>
-                <p id="qr-payment-caption">Ma QR se tu dong cap nhat theo tong thanh toan hien tai.</p>
+                <strong>Quét mã để thanh toán</strong>
+                <p id="qr-payment-caption">Mã QR sẽ tự động cập nhật theo tổng thanh toán hiện tại.</p>
               </div>
               <span id="qr-payment-total" class="status-badge status-confirmed">0 VND</span>
             </div>
             <div class="qr-payment-body">
-              <img id="qr-payment-image" class="qr-payment-image" alt="Ma QR thanh toan" />
+              <img id="qr-payment-image" class="qr-payment-image" alt="Mã QR thanh toán" />
               <div class="qr-payment-meta">
-                <p><span>Ngan hang</span><strong id="qr-bank-name">Dang cap nhat</strong></p>
-                <p><span>Chu tai khoan</span><strong id="qr-account-name">Dang cap nhat</strong></p>
-                <p><span>So tai khoan</span><strong id="qr-account-number">Dang cap nhat</strong></p>
-                <p><span>Noi dung</span><strong id="qr-transfer-note">THANH TOAN XE DO</strong></p>
+                <p><span>Ngân hàng</span><strong id="qr-bank-name">Đang cập nhật</strong></p>
+                <p><span>Chủ tài khoản</span><strong id="qr-account-name">Đang cập nhật</strong></p>
+                <p><span>Số tài khoản</span><strong id="qr-account-number">Đang cập nhật</strong></p>
+                <p><span>Nội dung</span><strong id="qr-transfer-note">THANH TOÁN XE ĐỘ</strong></p>
               </div>
             </div>
           </div>
           <div class="delivery-shell">
             <div class="delivery-inputs">
-              <input id="shipping-address" type="text" placeholder="Dia chi giao hang se tu dong lay tu ban do" readonly />
-              <input id="distance-km" type="text" placeholder="Khoang cach tu dong tinh (km)" readonly />
+              <input id="shipping-address" type="text" placeholder="Địa chỉ giao hàng sẽ tự động lấy từ bản đồ" readonly />
+              <input id="distance-km" type="text" placeholder="Khoảng cách tự động tính (km)" readonly />
             </div>
-            <textarea id="delivery-note" rows="3" placeholder="Ghi chu giao hang, vi du: goi truoc 10 phut, giao cong sau..."></textarea>
+            <textarea id="delivery-note" rows="3" placeholder="Ghi chú giao hàng, ví dụ: gọi trước 10 phút, giao cổng sau..."></textarea>
             <div class="map-card">
               <div class="map-card-head">
                 <div>
-                  <p class="eyebrow">Ban do giao hang</p>
-                  <h3>Chon diem giao tren ban do</h3>
+                  <p class="eyebrow">Bản đồ giao hàng</p>
+                  <h3>Chọn điểm giao trên bản đồ</h3>
                 </div>
-                <button id="use-map-selection" class="ghost-btn" type="button">Cap nhat tu diem map</button>
+                <button id="use-map-selection" class="ghost-btn" type="button">Cập nhật từ điểm map</button>
               </div>
               <div class="map-info-card">
                 <div class="map-info-row">
-                  <span>Dia chi da chon</span>
-                  <strong id="map-selected-address">Chua chon diem giao</strong>
+                  <span>Địa chỉ đã chọn</span>
+                  <strong id="map-selected-address">Chưa chọn điểm giao</strong>
                 </div>
                 <div class="map-info-row">
-                  <span>Quang duong du kien</span>
+                  <span>Quãng đường dự kiến</span>
                   <strong id="map-distance-value">0 km</strong>
                 </div>
               </div>
               <div id="delivery-map" class="delivery-map"></div>
-              <p id="map-hint" class="map-hint">Khong can nhap dia chi. Chi can bam len ban do, web se tu lay dia chi va tinh phi ship.</p>
+              <p id="map-hint" class="map-hint">Không cần nhập địa chỉ. Chỉ cần bấm lên bản đồ, web sẽ tự lấy địa chỉ và tính phí ship.</p>
               <p id="shipping-feedback" class="map-hint hidden"></p>
             </div>
           </div>
           <div class="checkout-submit">
-            <button id="checkout-btn" class="primary-btn">Xac nhan thanh toan</button>
+            <button id="checkout-btn" class="primary-btn">Xác nhận thanh toán</button>
           </div>
         </div>
       </section>

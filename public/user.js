@@ -54,7 +54,7 @@ async function api(path, options = {}) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Co loi xay ra");
+    throw new Error(data.message || "Có lỗi xảy ra");
   }
 
   return data;
@@ -77,11 +77,11 @@ function formatCurrency(value) {
 
 function getStatusLabel(status) {
   const labels = {
-    pending: "Cho xac nhan",
-    confirmed: "Da xac nhan",
-    shipping: "Dang giao",
-    completed: "Hoan thanh",
-    cancelled: "Da huy"
+    pending: "Chờ xác nhận",
+    confirmed: "Đã xác nhận",
+    shipping: "Đang giao",
+    completed: "Hoàn thành",
+    cancelled: "Đã hủy"
   };
 
   return labels[status] || status;
@@ -89,11 +89,11 @@ function getStatusLabel(status) {
 
 function getWarrantyStatusLabel(status) {
   const labels = {
-    active: "Dang hieu luc",
-    claimed: "Da tiep nhan",
-    resolved: "Da xu ly",
-    rejected: "Tu choi",
-    expired: "Het han"
+    active: "Đang hiệu lực",
+    claimed: "Đã tiếp nhận",
+    resolved: "Đã xử lý",
+    rejected: "Từ chối",
+    expired: "Hết hạn"
   };
 
   return labels[status] || status;
@@ -118,13 +118,13 @@ function renderCartCount(cart) {
 }
 
 function renderProfile(profile, orders) {
-  elements.greeting.textContent = `Xin chao, ${profile.fullName}`;
+  elements.greeting.textContent = `Xin chào, ${profile.fullName}`;
   elements.profile.innerHTML = `
-    <div class="mini-card"><strong>Ten dang nhap</strong><p>${profile.username}</p></div>
-    <div class="mini-card"><strong>Ho ten</strong><p>${profile.fullName}</p></div>
-    <div class="mini-card"><strong>So dien thoai</strong><p>${profile.phone || "Chua cap nhat"}</p></div>
-    <div class="mini-card"><strong>Dia chi</strong><p>${profile.address || "Chua cap nhat"}</p></div>
-    <div class="mini-card"><strong>Tong don da mua</strong><p>${orders.length} don</p></div>
+    <div class="mini-card"><strong>Tên đăng nhập</strong><p>${profile.username}</p></div>
+    <div class="mini-card"><strong>Họ tên</strong><p>${profile.fullName}</p></div>
+    <div class="mini-card"><strong>Số điện thoại</strong><p>${profile.phone || "Chưa cập nhật"}</p></div>
+    <div class="mini-card"><strong>Địa chỉ</strong><p>${profile.address || "Chưa cập nhật"}</p></div>
+    <div class="mini-card"><strong>Tổng đơn đã mua</strong><p>${orders.length} đơn</p></div>
   `;
 }
 
@@ -134,13 +134,13 @@ function renderOrders(orders) {
         .map(
           (order) => `
             <article class="mini-card">
-              <strong>Don ${order._id.slice(-6).toUpperCase()}</strong>
+              <strong>Đơn ${order._id.slice(-6).toUpperCase()}</strong>
               <p><span class="status-badge status-${order.status}">${getStatusLabel(order.status)}</span></p>
               <p>${order.items
                 .map((item) => {
                   const resource = item.itemType === "accessory" ? item.accessory : item.vehicle;
                   if (!resource) {
-                    return `San pham x${item.quantity}`;
+                    return `Sản phẩm x${item.quantity}`;
                   }
                   if (item.itemType === "vehicle") {
                     return `<a href="/product.html?slug=${resource.slug}">${resource.name}</a> x${item.quantity}`;
@@ -148,15 +148,15 @@ function renderOrders(orders) {
                   return `${resource.name} x${item.quantity}`;
                 })
                 .join(", ")}</p>
-              <p>Thanh toan: ${order.paymentMethod === "bank_transfer" ? "Giao dich ma QR" : "Tien mat"}</p>
-              <p>Nhan hang: ${order.fulfillmentMethod === "delivery" ? "Ship tan noi" : "Nhan tai cua hang"}</p>
-              <p>Tong thanh toan: ${formatCurrency(order.totalAmount)}</p>
-              <p>Dia chi giao: ${order.shippingAddress}</p>
+              <p>Thanh toán: ${order.paymentMethod === "bank_transfer" ? "Giao dịch mã QR" : "Tiền mặt"}</p>
+              <p>Nhận hàng: ${order.fulfillmentMethod === "delivery" ? "Giao tận nơi" : "Nhận tại cửa hàng"}</p>
+              <p>Tổng thanh toán: ${formatCurrency(order.totalAmount)}</p>
+              <p>Địa chỉ giao: ${order.shippingAddress}</p>
             </article>
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co don hang nao. Don sau khi thanh toan se duoc luu lai o day.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có đơn hàng nào. Đơn sau khi thanh toán sẽ được lưu lại ở đây.</p></div>`;
 }
 
 function renderReviews(reviews) {
@@ -171,7 +171,7 @@ function renderReviews(reviews) {
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co danh gia nao. Danh gia gui xong se duoc luu lai o day.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có đánh giá nào. Đánh giá gửi xong sẽ được lưu lại ở đây.</p></div>`;
 }
 
 function renderReviewOptions(vehicles) {
@@ -201,12 +201,12 @@ function renderNotifications(list) {
               <span class="notification-time">${formatNotificationDate(notification.createdAt)}</span>
             </div>
             <p>${notification.message}</p>
-            ${notification.link ? `<a class="ghost-btn small-btn" href="${notification.link}">Xem chi tiet</a>` : ""}
-            ${notification.isRead ? "" : `<button class=\"ghost-btn small-btn\" onclick=\"markNotificationRead('${notification._id}')\">Danh dau da doc</button>`}
+            ${notification.link ? `<a class="ghost-btn small-btn" href="${notification.link}">Xem chi tiết</a>` : ""}
+            ${notification.isRead ? "" : `<button class=\"ghost-btn small-btn\" onclick=\"markNotificationRead('${notification._id}')\">Đánh dấu đã đọc</button>`}
           </article>
         `)
         .join("")
-    : `<div class="mini-card"><p>Chua co thong bao nao.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có thông báo nào.</p></div>`;
 }
 
 function updateNotificationBadge(count) {
@@ -251,24 +251,24 @@ function addNotification(notification) {
   notifications.unshift(notification);
   renderNotifications(notifications);
   updateNotificationBadge(notifications.filter((item) => !item.isRead).length);
-  showToast(notification.title || "Thong bao moi");
+  showToast(notification.title || "Thông báo mới");
 }
 
 function getOrderItemLabel(item) {
   const resource = item.itemType === "accessory" ? item.accessory : item.vehicle;
-  return resource?.name || "San pham";
+  return resource?.name || "Sản phẩm";
 }
 
 function renderWarrantySelection() {
   const selectedType = elements.warrantyItemType.value;
   const orderOptions = warrantyOrders.map((order) => {
-    const label = `Don ${order._id.slice(-6).toUpperCase()} - ${formatDate(order.createdAt)}`;
+    const label = `Đơn ${order._id.slice(-6).toUpperCase()} - ${formatDate(order.createdAt)}`;
     return `<option value="${order._id}">${label}</option>`;
   });
 
   elements.warrantyOrderSelect.innerHTML = orderOptions.length
     ? orderOptions.join("")
-    : `<option value="">Chua co don hang</option>`;
+    : `<option value="">Chưa có đơn hàng</option>`;
 
   const selectedOrder = warrantyOrders.find((order) => order._id === elements.warrantyOrderSelect.value) || warrantyOrders[0];
 
@@ -277,20 +277,20 @@ function renderWarrantySelection() {
 
   elements.warrantyVehicleSelect.innerHTML = vehicleItems.length
     ? vehicleItems.map((item) => `<option value="${item.vehicle?._id || item.vehicle}">${getOrderItemLabel(item)}</option>`).join("")
-    : `<option value="">Khong co xe trong don</option>`;
+    : `<option value="">Không có xe trong đơn</option>`;
 
   elements.warrantyAccessorySelect.innerHTML = accessoryItems.length
     ? accessoryItems.map((item) => `<option value="${item.accessory?._id || item.accessory}">${getOrderItemLabel(item)}</option>`).join("")
-    : `<option value="">Khong co phu kien trong don</option>`;
+    : `<option value="">Không có phụ kiện trong đơn</option>`;
 
   elements.warrantyServiceSelect.innerHTML = warrantyServices.length
     ? warrantyServices
         .map(
           (service) =>
-            `<option value="${service._id}">${service.serviceType} - ${service.vehicle?.name || "Dich vu"} - ${formatDate(service.date)}</option>`
+            `<option value="${service._id}">${service.serviceType} - ${service.vehicle?.name || "Dịch vụ"} - ${formatDate(service.date)}</option>`
         )
         .join("")
-    : `<option value="">Chua co lich dich vu</option>`;
+    : `<option value="">Chưa có lịch dịch vụ</option>`;
 
   const isService = selectedType === "service";
   const isVehicle = selectedType === "vehicle";
@@ -309,14 +309,14 @@ function renderWarrantySelection() {
 
 function getWarrantyTargetLabel(warranty) {
   if (warranty.itemType === "service") {
-    return warranty.service?.serviceType || "Dich vu";
+    return warranty.service?.serviceType || "Dịch vụ";
   }
 
   if (warranty.itemType === "vehicle") {
     return warranty.vehicle?.name || "Xe";
   }
 
-  return warranty.accessory?.name || "Phu kien";
+  return warranty.accessory?.name || "Phụ kiện";
 }
 
 function renderWarranties(warranties) {
@@ -329,15 +329,15 @@ function renderWarranties(warranties) {
                 <strong>${getWarrantyTargetLabel(warranty)}</strong>
                 <span class="status-badge status-${warranty.status}">${getWarrantyStatusLabel(warranty.status)}</span>
               </div>
-              <p>Loai: ${warranty.itemType} / ${warranty.warrantyType || "standard"}</p>
-              <p>Mo ta loi: ${warranty.issueDescription || "Chua co mo ta"}</p>
-              <p>Bat dau: ${formatDate(warranty.startDate)} / Het han: ${formatDate(warranty.endDate)}</p>
-              <p>Ghi chu xu ly: ${warranty.resolutionNotes || "Chua co"}</p>
+              <p>Loại: ${warranty.itemType} / ${warranty.warrantyType || "standard"}</p>
+              <p>Mô tả lỗi: ${warranty.issueDescription || "Chưa có mô tả"}</p>
+              <p>Bắt đầu: ${formatDate(warranty.startDate)} / Hết hạn: ${formatDate(warranty.endDate)}</p>
+              <p>Ghi chú xử lý: ${warranty.resolutionNotes || "Chưa có"}</p>
             </article>
           `
         )
         .join("")
-    : `<div class="mini-card"><p>Chua co yeu cau bao hanh nao.</p></div>`;
+    : `<div class="mini-card"><p>Chưa có yêu cầu bảo hành nào.</p></div>`;
 }
 
 async function loadPage() {

@@ -47,7 +47,7 @@ async function api(path, options = {}) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Co loi xay ra");
+    throw new Error(data.message || "Có lỗi xảy ra");
   }
 
   return data;
@@ -74,10 +74,10 @@ function renderNav() {
 
   const dashboardPath = state.user.role === "admin" ? "/admin.html" : "/user.html";
   const showCartLink = state.user.role === "user";
-  elements.welcomeText.textContent = `Xin chao, ${state.user.fullName}`;
+  elements.welcomeText.textContent = `Xin chào, ${state.user.fullName}`;
   elements.cartLink.classList.toggle("hidden", !showCartLink);
   elements.dashboardLink.href = dashboardPath;
-  elements.dashboardLink.textContent = state.user.role === "admin" ? "Quan tri" : "Tai khoan";
+  elements.dashboardLink.textContent = state.user.role === "admin" ? "Quản trị" : "Tài khoản";
   elements.heroDashboardLink.href = dashboardPath;
 }
 
@@ -110,7 +110,7 @@ function renderVehicles(vehicles) {
               <strong>${formatCurrency(vehicle.salePrice || vehicle.price)}</strong>
               <span class="old-price">${formatCurrency(vehicle.price)}</span>
             </div>
-            <button class="primary-btn" onclick="addToCart('${vehicle._id}')">Them vao gio</button>
+            <button class="primary-btn" onclick="addToCart('${vehicle._id}')">Thêm vào giỏ</button>
           </div>
         </article>
       `
@@ -125,7 +125,7 @@ function renderPromotions(promotions) {
         <article class="promo-card">
           <p class="eyebrow">${item.code}</p>
           <h3>${item.title}</h3>
-          <p>Giam ${item.discountPercent}% cho don hop le.</p>
+          <p>Giảm ${item.discountPercent}% cho đơn hợp lệ.</p>
         </article>
       `
     )
@@ -141,7 +141,7 @@ function renderAccessories(accessories) {
           <div class="vehicle-body">
             <div class="vehicle-meta">
               <span>${accessory.category}</span>
-              <span>${(accessory.compatibleVehicles || []).slice(0, 1).join("") || "Moi loai xe"}</span>
+              <span>${(accessory.compatibleVehicles || []).slice(0, 1).join("") || "Mọi loại xe"}</span>
             </div>
             <h3>${accessory.name}</h3>
             <p>${accessory.description}</p>
@@ -149,7 +149,7 @@ function renderAccessories(accessories) {
               <strong>${formatCurrency(accessory.salePrice || accessory.price)}</strong>
               <span class="old-price">${formatCurrency(accessory.price)}</span>
             </div>
-            <button class="primary-btn" onclick="addAccessoryToCart('${accessory._id}')">Them phu kien</button>
+            <button class="primary-btn" onclick="addAccessoryToCart('${accessory._id}')">Thêm phụ kiện</button>
           </div>
         </article>
       `
@@ -180,7 +180,7 @@ async function searchVehicles(event) {
     renderVehicles(vehicles);
 
     if (!vehicles.length) {
-      elements.vehicleList.innerHTML = `<div class="mini-card"><p>Khong tim thay san pham phu hop.</p></div>`;
+      elements.vehicleList.innerHTML = `<div class="mini-card"><p>Không tìm thấy sản phẩm phù hợp.</p></div>`;
     }
   } catch (error) {
     showToast(error.message);
@@ -253,7 +253,7 @@ function logout() {
   localStorage.removeItem("user");
   renderNav();
   renderCartCount(0);
-  showToast("Da dang xuat");
+  showToast("Đã đăng xuất");
 }
 
 async function handleLogin(event) {
@@ -268,7 +268,7 @@ async function handleLogin(event) {
     });
     saveAuth(data);
     closeModal();
-    showToast(`Xin chao ${data.user.fullName}`);
+    showToast(`Xin chào ${data.user.fullName}`);
   } catch (error) {
     showAuthError(error.message);
     showToast(error.message);
@@ -281,17 +281,17 @@ async function handleRegister(event) {
   clearAuthError();
 
   if (!formData.fullName.trim()) {
-    showAuthError("Vui long nhap ho ten");
+    showAuthError("Vui lòng nhập họ tên");
     return;
   }
 
   if (!formData.username.trim()) {
-    showAuthError("Vui long nhap ten dang nhap");
+    showAuthError("Vui lòng nhập tên đăng nhập");
     return;
   }
 
   if ((formData.password || "").length < 6) {
-    showAuthError("Mat khau phai co it nhat 6 ky tu");
+    showAuthError("Mật khẩu phải có ít nhất 6 ký tự");
     return;
   }
 
@@ -302,7 +302,7 @@ async function handleRegister(event) {
     });
     saveAuth(data);
     closeModal();
-    showToast("Tao tai khoan thanh cong");
+    showToast("Tạo tài khoản thành công");
   } catch (error) {
     showAuthError(error.message);
     showToast(error.message);
@@ -319,7 +319,7 @@ async function handleGoogleCredentialResponse(response) {
     });
     saveAuth(data);
     closeModal();
-    showToast(`Xin chao ${data.user.fullName}`);
+    showToast(`Xin chào ${data.user.fullName}`);
   } catch (error) {
     showAuthError(error.message);
     showToast(error.message);
@@ -373,7 +373,7 @@ window.addToCart = async function addToCart(vehicleId) {
       body: JSON.stringify({ vehicleId, quantity: 1 })
     });
     await refreshCartCount();
-    showToast("Da them vao gio hang");
+    showToast("Đã thêm vào giỏ hàng");
   } catch (error) {
     showToast(error.message);
   }
@@ -391,7 +391,7 @@ window.addAccessoryToCart = async function addAccessoryToCart(accessoryId) {
       body: JSON.stringify({ accessoryId, quantity: 1 })
     });
     await refreshCartCount();
-    showToast("Da them phu kien vao gio");
+    showToast("Đã thêm phụ kiện vào giỏ");
   } catch (error) {
     showToast(error.message);
   }
